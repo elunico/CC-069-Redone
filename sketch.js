@@ -126,12 +126,20 @@ function setup() {
   saveBestVehicleButton.attribute('disabled', true);
 
   createP('');
-  let loadOptimalButton = createButton('Load an Example Optimal Configuration');
-  loadOptimalButton.mousePressed(loadOptimal);
+  let loadOptimalButton = createButton('Load a Population with High Clustering');
+  loadOptimalButton.mousePressed(loadOptimalCluster);
+  let loadOptimal2Button = createButton('Load a Population with Low Clustering');
+  loadOptimal2Button.mousePressed(loadOptimalNoCluster);
 }
 
-function loadOptimal() {
-  fetch('./optimal-population-configurations/configuration1.json').then(r => r.json()).then(json => {
+function loadOptimalCluster() {
+  fetch('./optimal-population-configurations/config-1-clusters.json').then(r => r.json()).then(json => {
+    loadConfigurationFromJSON(json);
+  });
+}
+
+function loadOptimalNoCluster() {
+  fetch('./optimal-population-configurations/config-2-less-clusters.json').then(r => r.json()).then(json => {
     loadConfigurationFromJSON(json);
   });
 }
