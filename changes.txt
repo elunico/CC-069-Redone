@@ -1,0 +1,86 @@
+Changes to Coding Challenge #69 in this sketch
+This is a list of changes I made to the Coding Challenge #69 from the Coding
+Train.
+
+Changes:
+
+
+- Altruism: Each Vehicle can see other Vehicles and may seek them out. When
+encountering another Vehicle, a Vehicle may choose to share some of its health
+(food) with that Vehicle. Both the distance at which a Vehicle can be seen and
+the willingness to share food are integrated into the DNA of the Vehicles and
+can evolve. The sharing can be onesided but it can also be two sided. If a
+Vehicle chooses to share and the other one doesn't then one loses health and the
+other gains. If both or neither share there is no net change. Vehicles also have
+the ability to seek out other vehicles as they do food. This is also necessary
+not only for Altruism but reproduction.
+
+- Reproduction: Rather than vehicles being cloned periodically, they must now
+have a mate in order to reproduce. The ability to see a potential mate is
+encoded in the DNA using the same value as the ability to see Vehicles as
+mentioned in the Altruism section. Meaning a Vehicle must enter another
+Vehicle's perception radius for Vehicles to be considered for either mating or
+Altruism. Due to the natural of reproduction, additional rules were imposed:
+
+- A Vehicle cannot reproduce until it has been alive for some minimum number of
+frames. This varies from about 3 to 10 seconds.
+
+- Once a Vehicle reproduces, it cannot reproduce again for between 0 and 2
+seconds. Both of these are to mitigate the out-of-control exponential growth
+that occurs when two Vehicles are near each other and can reproduce. Vehicles
+move apart seeking food or the like before they are capable of reproducing
+again.
+
+- The Chance for Reproduction Slider, indicates how likely it is that two
+Vehicles will reproduce when they are near each other. Please note the
+distinctions. All Vehicles have a Vehicle Perception radius like for food. They
+cannot see and therefore cannot consider Vehicles outside this radius for either
+Altruism or Mating. All Vehicles also have a part
+of their DNA that indicates how strongly they are attracted to seeking another
+Vehicle if they see one. In the same way that they have a part of their DNA that
+indicates how attracted they are to food if they see it. (If this is confusing I
+suggest watching the Coding Train videos to see what I mean). Finally,
+regardless of if they seek the mate, if a Vehicle comes into their perception
+radius, there is a chance they will reproduce. <strong>This</strong> is what is
+determined by the slider for reproduction chance.
+
+
+- When reproducing, the child Vehicle will receive some <strong>continuous
+  percentage</strong> of either parent's DNA. It may be 50/50 or 100/0 or 20/80
+etc. but the DNA taken from each parent will always be continuous. A child could
+never for example inherit gene 1, 3, and 7 from one parent and 2, 4, 5, 6, 8, 9,
+10 from another. This design choice like many was not done for correctness or
+efficiency but simply as a creative choice. Anyone is encouraged to do this
+differntly!
+
+- Saving and Loading: It is possible to save and load the data in this sketch.
+The sketch keeps track of the largest population created and the surviving
+vehicle of that population. Any time the population size record is broken AND
+the last vehicle of that population dies, the best Vehicle is updated and you
+can save it as JSON. This cannot currently be loaded back into the program.
+Furthermore, you can at any point save the configuration of the simulation. This
+will save the environment variables (values of the three sliders) and the DNA
+(and only the DNA) of all the living Vehicles in the world. This configuration
+data (sort of like a snapshot) can be loaded back into the prgoram with the load
+button. Notice that the sketch currently has an optimal configuration in a
+folder. This configuration produces a stable and consistent population size that
+will run for a long time (possibly indefintiely).
+
+- Debug Output: The perception radius for other Vehicles and propensity to seek
+them out are drawn like the Food and Poison values but in blue instead of green
+or red. In addition, the FPS, total population size, number of Vehicles that
+have died, and largest population so far grown are all shown as text in the
+canvas.
+
+- Pause and Reset buttons: the pause button, halts the draw loop by calling
+noLoop(). This is useful for looking at debug output since there is a lot of
+data and it can be hard to see and slow to draw. The Reset Population button,
+clears all the vehicles and the counts and begins from scratch, though the food
+and poison arrays do not change.
+
+
+Additional Changes
+
+On February 20, 2020, I duplicated this project to really clean up the code and change the style
+
+I began by moving constructor functions to ES6 classes and by changing all lets to vars where appropriate
