@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <script src="https://cdn.jsdelivr.net/npm/p5@1.4.1/lib/p5.js"></script>
+  <script language="javascript" type="text/javascript" src="gene.js"></script>
+  <script language="javascript" type="text/javascript" src="dna.js"></script>
   <script language="javascript" type="text/javascript" src="vehicle.js"></script>
   <script language="javascript" type="text/javascript" src="sketch.js"></script>
   <link rel="stylesheet" href="style.css">
@@ -10,9 +12,6 @@
 
 <body>
   <h1>Evolving Steering Behaviors</h1>
-  <h3>There seems to be a problem saving data from the web editor. If you want to be able to save your configurations
-    and vehicles, I suggest getting the source from GitHub and running it locally, as saveJSON, seems to have a problem
-    in the web editor.</h3>
   <p>
     This sketch is an elaboration on a <a target="_blank" ref="noreferrer noopener"
       href="https://youtu.be/ykOcaInciBI">Coding Challenge (#69)</a>
@@ -20,10 +19,21 @@
     by Dan Shiffman. I began with the code from the end of part 4 and added several things.
     For a list of things that I changed, see the changes.txt file on the side
   </p>
-
-
-
-
+  <h4>Color Key for Simulation</h4>
+  <p class="description">
+    <span style="color: magenta">magenta vehicles</span> are healthy and become <span
+      style="color: darkcyan">cyan</span>
+    as
+    they are declining in health. A health of 0 causes the vehicle to
+    die and be removed
+    <br>
+    Vehicles have a maximum lifespan of 14000 frames and <span style="background-color: lightgray;">slowly darken</span>
+    until they get to their 14000th frame when they
+    die an are removed
+    <br>
+    Vehicles are outlined in <span style="color: white; background-color: rgb(51, 51, 51);">white</span> when they are
+    mature enough to reproduce and are half sized when they are younger than 2 seconds old.
+  </p>
 </body>
 
 </html>

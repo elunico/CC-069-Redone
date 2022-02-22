@@ -1,13 +1,35 @@
 html,
 body {
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
   padding: 0;
 }
 
 body {
-  width: 50vw;
+  /* width: 50vw; */
+  padding: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+button,
+input {
+  margin: 0.25rem;
+}
+
+button {
+  width: 250px;
 }
 
 canvas {
   display: block;
+}
+
+.description {
+  font-family: sans-serif;
+}
+
+h4 {
+  margin: 0;
 }

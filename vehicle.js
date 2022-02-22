@@ -1,88 +1,5 @@
-
-const foodDesire = 'food-desire';
-const poisonDesire = 'poison-desire';
-const foodPerception = 'food-perception';
-const poisonPerception = 'poison-perception';
-const othersPerception = 'others-perception';
-const donationChance = 'donation-chance';
-const helpDesire = 'help-desire';
-const helpPerception = 'help-perception';
-const pityChance = 'pity-chance';
-const reproductionDesire = 'reproduction-desire';
-const ageOfMaturity = 'age-of-maturity';
-
-
-class Gene {
-  constructor(name, probability, min, max, mutationRate) {
-    this.name = name;
-    // TODO: should this be true or no?
-    this.probability = Math.max(Math.min(probability, max), min);
-    this.min = min;
-    this.max = max;
-    this.mutationRate = mutationRate;
-  }
-
-  randomDelta() {
-    return Math.random() < 0.5 ? random(this.min * 0.1, this.max * 0.1) : -random(this.min * 0.1, this.max * 0.1);
-  }
-
-  clone() {
-    if (Math.random() < this.mutationRate) {
-      let newProb = this.probability + this.randomDelta();
-      mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
-      console.log(`Gene ${this.name} just mutated from ${this.probability} to ${newProb}`);
-      return new Gene(this.name, newProb, this.min, this.max);
-    } else {
-      return new Gene(this.name, this.probability, this.min, this.max);
-    }
-  }
-}
-
-class DNA {
-  constructor(genes) {
-    this.genes = genes || {};
-  }
-
-  addGene(gene) {
-    this.genes[gene.name] = gene;
-  }
-
-  clone() {
-    let newGenes = {};
-    for (let key of Object.keys(this.genes)) {
-      newGenes[key] = this.genes[key].clone();
-    }
-    return new DNA(newGenes);
-  }
-
-  getGene(name) {
-    return this.genes[name].probability;
-  }
-
-  crossover(other) {
-    let dna = new DNA();
-
-    let first = random(1) < 0.5 ? this : other;
-    let second = first === this ? other : this;
-
-    let geneNames = Object.keys(first.genes);
-    let stop = floor(random(geneNames.length));
-
-    for (let i = 0; i < stop; i++) {
-      let name = geneNames[i];
-      dna.addGene(first.genes[name].clone());
-    }
-
-    for (let i = stop; i < geneNames.length; i++) {
-      let name = geneNames[i];
-      dna.addGene(second.genes[name].clone());
-    }
-    return dna;
-  }
-}
-
 class Vehicle {
-  constructor(x, y, dna, mr = 0.1) {
+  constructor(x, y, dna, mr = 0.05) {
     this.acceleration = createVector(0, 0);
     this.velocity = createVector(0, -2);
     this.position = createVector(x, y);
@@ -93,8 +10,8 @@ class Vehicle {
 
     this.health = 1;
 
-    this.firstFrame = frameCount;
-    this.lastFrame = frameCount + 14000; // max age is 14000 frames (233 seconds)
+    this.livingFrames = 0;
+    this.maxFrames = 14000; // max age is 14000 frames (233 seconds)
     this.lastReproduced = null;
 
     if (dna === undefined) {
@@ -138,21 +55,17 @@ class Vehicle {
     }
   }
 
-  // Method to update location
   update() {
     this.health -= 0.01;
+    this.livingFrames++;
 
-    // die after 50000 frames -> reproduction is necessary
-    if (frameCount > this.lastFrame) {
+    if (this.livingFrames > this.maxFrames) {
       this.health = -Infinity;
     }
 
-    // Update velocity
     this.velocity.add(this.acceleration);
-    // Limit speed
     this.velocity.limit(this.maxspeed);
     this.position.add(this.velocity);
-    // Reset accelerationelertion to 0 each cycle
     this.acceleration.mult(0);
   }
 
@@ -162,6 +75,7 @@ class Vehicle {
   }
 
   behaviors(good, bad, potentialMates) {
+    if (potentialMates) throw 'Passing mates';
     let steerG = this.eat(good, 0.2, this.dna.getGene(foodPerception));
     let steerB = this.eat(bad, -1, this.dna.getGene(poisonPerception));
     let mateSteer = this.seekNearestVehicle(this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
@@ -195,7 +109,7 @@ class Vehicle {
 
     // if the vehicle's health is low there is a chance they will seek
     // another vehicle as well as food or avoiding poison. This
-    // is dependent on how altruistc they are themselves. More
+    // is dependent on how altruistic they are themselves. More
     // altruistic vehicles seek vehicles more often, but could be burned
     // if they seek someone that is not altruistic themselves.
     if (
@@ -255,9 +169,9 @@ class Vehicle {
     // then have not recently reproduced (variable 1-3 seconds but not in DNA)
     // then chance to reproduce
     if (
-      record < this.dna.getGene(donationChance) &&
-      frameCount - this.firstFrame > this.dna.getGene(ageOfMaturity) &&
-      frameCount - this.lastReproduced > 60 * random(0, 2) &&
+      record < this.dna.getGene(othersPerception) &&
+      this.livingFrames > this.dna.getGene(ageOfMaturity) &&
+      this.livingFrames - this.lastReproduced > 60 * random(0, 2) &&
       random(1) < reproduceSlider.value()
     ) {
       console.log("2 vehicles have reproduced");
@@ -265,7 +179,7 @@ class Vehicle {
       console.log(nearest);
       numReproduced++;
       let dna = this.dna.crossover(nearest.dna);
-      this.lastReproduced = frameCount;
+      this.lastReproduced = this.livingFrames;
       return new Vehicle(this.position.x, this.position.y, dna);
     } else {
       return null;
@@ -326,31 +240,40 @@ class Vehicle {
     translate(this.position.x, this.position.y);
     rotate(angle);
 
-    let gr = color(0, 255, 255);
-    let rd = color(0, 0, 0, 0);
-    let col = lerpColor(rd, gr, this.health);
+    let cyan = color(0, 255, 255);
+    let magenta = color(255, 0, 255);
+    let col = lerpColor(cyan, magenta, this.health);
+    let black = color(0, 0, 0);
+    col = lerpColor(col, black, (this.livingFrames) / 14000);
 
-    if ((frameCount - this.firstFrame) < (3 * frameRate())) {
-      strokeWeight(2);
-      stroke(254, 0, 255);
+    strokeWeight(2);
+    if (this.dna.getGene(ageOfMaturity) < this.livingFrames) {
+      stroke(255, 255, 255);
     } else {
-      noStroke();
       stroke(col);
     }
 
-    fill(col);
-    strokeWeight(1);
-    beginShape();
-    vertex(0, -this.r * 2);
-    vertex(-this.r, this.r * 2);
-    vertex(this.r, this.r * 2);
-    endShape(CLOSE);
+    if (this.livingFrames > 120) {
+      fill(col);
+      beginShape();
+      vertex(0, -this.r * 2);
+      vertex(-this.r, this.r * 2);
+      vertex(this.r, this.r * 2);
+      endShape(CLOSE);
+    } else {
+      fill(col);
+      beginShape();
+      vertex(0, -this.r);
+      vertex(-this.r, this.r);
+      vertex(this.r, this.r);
+      endShape(CLOSE);
+    }
 
     if (debug.checked()) {
-      if (mouseIsPressed) {
-        if (dist(mouseX, mouseY, this.position.x, this.position.y) < 10) {
-          this.debugging = !this.debugging;
-        }
+      if (dist(mouseX, mouseY, this.position.x, this.position.y) < 50) {
+        this.debugging = true;
+      } else {
+        this.debugging = false;
       }
     } else {
       this.debugging = false;
@@ -377,7 +300,21 @@ class Vehicle {
       text(`${nf(this.dna.getGene(donationChance), 1, 2)}`, 0, 0);
     }
 
+
     pop();
+
+    if (mouseIsPressed) {
+      push();
+
+      translate(this.position.x, this.position.y);
+      stroke(255);
+      fill(0);
+      textSize(13);
+      text(`${nf(this.health, 1, 3)}`, 0, -30);
+      text(`${nf(this.maxFrames - this.livingFrames)}`, 0, -15);
+
+      pop();
+    }
   }
 
   boundaries() {
