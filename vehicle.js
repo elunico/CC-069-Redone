@@ -38,23 +38,37 @@ class Vehicle {
       // this happens completely independently of health and other factors - pure random chance
       this.dna.addGene(new Gene(donationChance, random(0, 1), 0, 1, mr));
 
-      // controls how likely is it that the vehicle will seek help from a nearby vehicle
+      // controls how strongly vehicles will prefer seeking help to other things
+      // also weighs how willing they are to steer towards someone in need. Presumably this could change
       this.dna.addGene(new Gene(helpDesire, random(-2, 2), -2, 2, mr));
       // this.dna.addGene(new Gene(helpPerception, random(0, 100), 0, 100, mr));
 
       // controls how likely is it that vehicle gives away food and health to a less well off vehicle
       this.dna.addGene(new Gene(pityChance, random(0, 1), 0, 1, mr));
 
-      // weighs steering force for desire to seek another vehicle for reproduction
+      // controls how strongly vehicles will prefer seeking another vehicle for reproduction over other things
       this.dna.addGene(new Gene(reproductionDesire, random(-2, 2), -2, 2, mr));
 
       // determines how many SECONDS after the beginning lifetime of the vehicle before it can reproduce
       this.dna.addGene(new Gene(ageOfMaturity, random(2 * 60, 6 * 60), 2 * 60, 6 * 60, mr));
-    } else {
+    }
+    else {
       this.dna = dna.clone();
     }
   }
 
+  tick(food, poison, vehicles) {
+    this.doMovementBehavior(food, poison, vehicles);
+    this.attemptAltruism(vehicles);
+    let newVehicle = this.attemptReproduction(vehicles);
+    if (newVehicle != null) {
+      vehicles.push(newVehicle);
+    }
+
+    this.update();
+  }
+
+  // Moves the vehicle and determines if it too old
   update() {
     this.health -= 0.01;
     this.livingFrames++;
@@ -67,33 +81,43 @@ class Vehicle {
     this.velocity.limit(this.maxspeed);
     this.position.add(this.velocity);
     this.acceleration.mult(0);
+    this.boundaries();
   }
 
+  // accumulate forces
   applyForce(force) {
     // We could add mass here if we want A = F / M
     this.acceleration.add(force);
   }
 
-  behaviors(good, bad, potentialMates) {
-    if (potentialMates) throw 'Passing mates';
-    let steerG = this.eat(good, 0.2, this.dna.getGene(foodPerception));
-    let steerB = this.eat(bad, -1, this.dna.getGene(poisonPerception));
-    let mateSteer = this.seekNearestVehicle(this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
-    let helpSteer = this.seekNearestVehicle(this.dna.getGene(othersPerception), this.dna.getGene(donationChance));
+  // accumulates all the forces that move the vehicle based on environmental things
+  // like food and poison as well as the other vehicles in the system
+  // All are weighted by the DNA of the vehicles
+  doMovementBehavior(good, bad, others) {
+    let steerG = this.seekEnvironmentals(good, this.dna.getGene(foodPerception));
+    let steerB = this.seekEnvironmentals(bad, this.dna.getGene(poisonPerception));
+    let mateSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
+    let helpSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
+    let altruismSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
 
     steerG.mult(this.dna.getGene(foodDesire));
     steerB.mult(this.dna.getGene(poisonDesire));
     helpSteer.mult(this.dna.getGene(helpDesire));
     mateSteer.mult(this.dna.getGene(reproductionDesire));
+    altruismSteer.mult(this.dna.getGene(helpDesire));
 
     // seek help only when health is low (calculated in seekNearestVehicle)
     // and when food is far away.
     this.applyForce(steerG);
     this.applyForce(helpSteer);
+    this.applyForce(mateSteer);
+    this.applyForce(altruismSteer);
     this.applyForce(steerB);
   }
 
-  seekNearestVehicle(perceptionDistance, willingness) {
+  // use perception and willingness (from DNA) to determine the force pushing
+  // the vehicle towards other members of the population
+  seekVehicles(vehicles, perceptionDistance, willingness) {
     let record = Infinity;
     let nearest = null;
 
@@ -107,37 +131,18 @@ class Vehicle {
       }
     }
 
-    // if the vehicle's health is low there is a chance they will seek
-    // another vehicle as well as food or avoiding poison. This
-    // is dependent on how altruistic they are themselves. More
-    // altruistic vehicles seek vehicles more often, but could be burned
-    // if they seek someone that is not altruistic themselves.
-    if (
-      this.health < 0.5 &&
-      record < perceptionDistance &&
-      random(1) < willingness
-    ) {
+    if (record < perceptionDistance && random(1) < willingness) {
       return this.seek(nearest.position);
-    } else {
+    }
+    else {
       return createVector(0, 0);
     }
   }
 
-  // seeking (above) is dependent on DNA, but the actual chance of reproducing
-  // must still be checked as must altruism because two vehicles can at any time
-  // encounter each other without having sought each other.
-  // seeking depends on dna and the actual altruism and reproduction chance
-  // depends as well separately.
 
-  altruism(others) {
-    /*
-      alternative idea. if you are sharing food, you cannot eat it.
-      in a more complicated scenario eating food counts some of the timeout
-      (according to this.dna[5]) and you can keep the other half in reserve
-      eating only if necessary but sharing if excess. You can also be hurt
-      if you come upon someone (this.dna[4]) and cannot share any food if you
-      hit the chance
-    */
+  // performs the actual donation of food if a vehicle is close enough to do it and
+  // based on probability of donation
+  attemptAltruism(others) {
     for (let vehicle of others) {
       if (vehicle !== this) {
         let d = this.position.dist(vehicle.position);
@@ -151,7 +156,9 @@ class Vehicle {
     }
   }
 
-  reproduce(population) {
+  // Performs the reproduction if two vehicles are close enough provided all other
+  // factors are ok such as lastReproduced time, age of maturity, etc.
+  attemptReproduction(population) {
     let nearest = null;
     let record = Infinity;
     for (let i = 0; i < population.length; i++) {
@@ -168,34 +175,35 @@ class Vehicle {
     // then old enough to reproduce (contained in DNA)
     // then have not recently reproduced (variable 1-3 seconds but not in DNA)
     // then chance to reproduce
-    if (
-      record < this.dna.getGene(othersPerception) &&
-      this.livingFrames > this.dna.getGene(ageOfMaturity) &&
-      this.livingFrames - this.lastReproduced > 60 * random(0, 2) &&
-      random(1) < reproduceSlider.value()
-    ) {
-      console.log("2 vehicles have reproduced");
-      console.log(this);
-      console.log(nearest);
+    if (record < this.dna.getGene(othersPerception) && this.livingFrames > this.dna.getGene(ageOfMaturity) && (this.livingFrames - this.lastReproduced) > (60 * random(
+      1.5,
+      5
+    )) && random(1) < reproduceSlider.value()) {
+      console.log("~ Reproduction event ~");
       numReproduced++;
       let dna = this.dna.crossover(nearest.dna);
       this.lastReproduced = this.livingFrames;
       return new Vehicle(this.position.x, this.position.y, dna);
-    } else {
+    }
+    else {
       return null;
     }
   }
 
-  eat(list, nutrition, perception) {
+  // Determines the steer forces applicable to particular elements of the environment
+  // like food and poison
+  seekEnvironmentals(list, perception) {
     let record = Infinity;
     let closest = null;
     for (let i = list.length - 1; i >= 0; i--) {
-      let d = this.position.dist(list[i]);
+      let d = this.position.dist(list[i].position);
 
       if (d < this.maxspeed) {
+        this.health += list[i].health_value;
+        // eagerly splice so that the next vehicle in update does not attempt to eat this food also
         list.splice(i, 1);
-        this.health += nutrition;
-      } else {
+      }
+      else {
         if (d < record && d < perception) {
           record = d;
           closest = list[i];
@@ -206,14 +214,15 @@ class Vehicle {
     // This is the moment of eating!
 
     if (closest != null) {
-      return this.seek(closest);
+      return this.seek(closest.position);
     }
 
     return createVector(0, 0);
   }
 
-  // A method that calculates a steering force towards a target
-  // STEER = DESIRED MINUS VELOCITY
+  // A generic method that calculates a steering force towards any target
+  // NO consideration is made towards the target, the distance, etc.
+  // It simply returns a seek force towards the vector it is passed
   seek(target) {
     let desired = p5.Vector.sub(target, this.position); // A vector pointing from the location to the target
 
@@ -225,7 +234,6 @@ class Vehicle {
     steer.limit(this.maxforce); // Limit to maximum steering force
 
     return steer;
-    //this.applyForce(steer);
   }
 
   dead() {
@@ -249,7 +257,8 @@ class Vehicle {
     strokeWeight(2);
     if (this.dna.getGene(ageOfMaturity) < this.livingFrames) {
       stroke(255, 255, 255);
-    } else {
+    }
+    else {
       stroke(col);
     }
 
@@ -260,7 +269,8 @@ class Vehicle {
       vertex(-this.r, this.r * 2);
       vertex(this.r, this.r * 2);
       endShape(CLOSE);
-    } else {
+    }
+    else {
       fill(col);
       beginShape();
       vertex(0, -this.r);
@@ -272,10 +282,12 @@ class Vehicle {
     if (debug.checked()) {
       if (dist(mouseX, mouseY, this.position.x, this.position.y) < 50) {
         this.debugging = true;
-      } else {
+      }
+      else {
         this.debugging = false;
       }
-    } else {
+    }
+    else {
       this.debugging = false;
     }
 
@@ -300,7 +312,6 @@ class Vehicle {
       text(`${nf(this.dna.getGene(donationChance), 1, 2)}`, 0, 0);
     }
 
-
     pop();
 
     if (mouseIsPressed) {
@@ -317,6 +328,7 @@ class Vehicle {
     }
   }
 
+  // applies a force that pushes vehicles who leave the window back into the window
   boundaries() {
     let d = 25;
 
@@ -324,13 +336,15 @@ class Vehicle {
 
     if (this.position.x < d) {
       desired = createVector(this.maxspeed, this.velocity.y);
-    } else if (this.position.x > width - d) {
+    }
+    else if (this.position.x > width - d) {
       desired = createVector(-this.maxspeed, this.velocity.y);
     }
 
     if (this.position.y < d) {
       desired = createVector(this.velocity.x, this.maxspeed);
-    } else if (this.position.y > height - d) {
+    }
+    else if (this.position.y > height - d) {
       desired = createVector(this.velocity.x, -this.maxspeed);
     }
 

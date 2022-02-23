@@ -42,32 +42,27 @@ function setup() {
   }
 
   for (let i = 0; i < 40; i++) {
-    let x = random(width);
-    let y = random(height);
-    food.push(createVector(x, y));
+    food.push(new Environmental(0.2));
   }
 
   for (let i = 0; i < 20; i++) {
-    let x = random(width);
-    let y = random(height);
-    poison.push(createVector(x, y));
+    poison.push(new Environmental(-1.0));
   }
 
-  debug = createCheckbox('Debug Visualization');
+  debug = createCheckbox("Debug Visualization");
 
-  pauseButton = createButton('Pause');
+  pauseButton = createButton("Pause");
   pauseButton.mousePressed(() => {
     if (paused) {
-      // loop();
-      pauseButton.html('Pause');
-    } else {
-      // noLoop();
+      pauseButton.html("Pause");
+    }
+    else {
       pauseButton.html("Resume");
     }
     paused = !paused;
   });
 
-  resetButton = createButton('Reset to new random population');
+  resetButton = createButton("Reset to new random population");
   resetButton.mousePressed(() => {
     vehicles = [];
     dead = 0;
@@ -79,7 +74,7 @@ function setup() {
   });
 
 
-  addNewButton = createButton('Add 50 random vehicles');
+  addNewButton = createButton("Add 50 random vehicles");
   addNewButton.mousePressed(() => {
     for (let i = 0; i < 50; i++) {
       let x = random(width);
@@ -88,67 +83,71 @@ function setup() {
     }
   });
 
-  createDiv('<h3>Controlling the Environment</h3>');
+  createDiv("<h3>Controlling the Environment</h3>");
 
-  foodDiv = createDiv('');
+  foodDiv = createDiv("");
   foodSpawnSlider = createSlider(0, 1, 0.25, 0.005);
-  foodSpawnSlider.style('width', '50%');
+  foodSpawnSlider.style("width", "50%");
 
-  poisonDiv = createDiv('');
+  poisonDiv = createDiv("");
   poisonSpawnSlider = createSlider(0, 1, 0.155, 0.005);
-  poisonSpawnSlider.style('width', '50%');
+  poisonSpawnSlider.style("width", "50%");
 
-  reproduceDiv = createDiv('');
+  reproduceDiv = createDiv("");
   reproduceSlider = createSlider(0, 1, 0.5, 0.0025);
-  reproduceSlider.style('width', '50%');
+  reproduceSlider.style("width", "50%");
 
-  createDiv('<h3>Reproduction &amp; Mutation events</h3>');
+  createDiv("<h3>Reproduction &amp; Mutation events</h3>");
 
-  eventsDiv = createDiv('');
+  eventsDiv = createDiv("");
 
-  createP('');
+  createP("");
 
-  createDiv('<h3>Saving and Loading Popualtions</h3>');
+  createDiv("<h3>Saving and Loading Popualtions</h3>");
 
-  saveBestVehicleButton = createButton('Save Best Vehicle');
+  saveBestVehicleButton = createButton("Save Best Vehicle");
   saveBestVehicleButton.mousePressed(() => {
     saveBestVehicle();
   });
-  saveConfigurationButton = createButton('Save Entire Configuration');
+  saveConfigurationButton = createButton("Save Entire Configuration");
   saveConfigurationButton.mousePressed(() => {
     saveConfiguration();
   });
 
-  createP('');
-  createDiv('Load Configuration from File');
+  createP("");
+  createDiv("Load Configuration from File");
 
   createFileInput(loadConfigurationFromFile);
-  saveBestVehicleButton.attribute('disabled', true);
+  saveBestVehicleButton.attribute("disabled", true);
 
-  createP('');
-  let loadOptimalButton = createButton('Load a Population with High Clustering');
+  createP("");
+  let loadOptimalButton = createButton("Load a Population with High Clustering");
   loadOptimalButton.mousePressed(loadOptimalCluster);
-  let loadOptimal2Button = createButton('Load a Population with Low Clustering');
+  let loadOptimal2Button = createButton("Load a Population with Low Clustering");
   loadOptimal2Button.mousePressed(loadOptimalNoCluster);
 }
 
 function loadOptimalCluster() {
-  fetch('./optimal-population-configurations/config-1-clusters.json').then(r => r.json()).then(json => {
-    loadConfigurationFromJSON(json);
+  fetch("./optimal-population-configurations/config-1-clusters.json").then(r => r.json()).then(json => {
+    loadConfigurationFromJSON(
+      json);
   });
 }
 
 function loadOptimalNoCluster() {
-  fetch('./optimal-population-configurations/config-2-less-clusters.json').then(r => r.json()).then(json => {
-    loadConfigurationFromJSON(json);
+  fetch("./optimal-population-configurations/config-2-less-clusters.json").then(r => r.json()).then(json => {
+    loadConfigurationFromJSON(
+      json);
   });
 }
 
 function keyPressed() {
-  if (key == ' ')
+  if (key === " ") {
     noLoop();
-  else if (key == 'r')
+  }
+  else if (key === "r") {
     loop();
+  }
 }
 
 function saveConfiguration() {
@@ -157,7 +156,7 @@ function saveConfiguration() {
     poisonSpawnChance: poisonSpawnSlider.value(),
     reproduceChance: reproduceSlider.value(),
     dnas: vehicles.map(i => i.dna)
-  }, 'configuration.json');
+  }, "configuration.json");
 }
 
 function loadConfigurationFromFile(file) {
@@ -177,11 +176,18 @@ function loadConfigurationFromJSON(json) {
       let dna = new DNA();
       let keys = Object.keys(dnas[i].genes);
       for (let j = 0; j < keys.length; j++) {
-        let gene = new Gene(dnas[i].genes[keys[j]].name, dnas[i].genes[keys[j]].probability, dnas[i].genes[keys[j]].min, dnas[i].genes[keys[j]].max, dnas[i].genes[keys[j]].mutationRate || 0.05);
+        let gene = new Gene(
+          dnas[i].genes[keys[j]].name,
+          dnas[i].genes[keys[j]].probability,
+          dnas[i].genes[keys[j]].min,
+          dnas[i].genes[keys[j]].max,
+          dnas[i].genes[keys[j]].mutationRate || 0.05
+        );
         dna.addGene(gene);
       }
       vehicles.push(new Vehicle(random(width), random(height), dna));
-    } else if (Array.isArray(dnas[i])) {
+    }
+    else if (Array.isArray(dnas[i])) {
       // old style loading
       let dna = new DNA();
       for (let j = 0; j < dnas[i].length; j++) {
@@ -190,7 +196,8 @@ function loadConfigurationFromJSON(json) {
         console.log(gene);
       }
       vehicles.push(new Vehicle(random(width), random(height), dna));
-    } else {
+    }
+    else {
       // console.log(dnas[i]);
     }
   }
@@ -213,13 +220,20 @@ function saveBestVehicle() {
       lastReproduced: bestVehicle.lastReproduced,
 
       dna: bestVehicle.dna
-    },
-    environment: {
+    }, environment: {
       foodSpawnChance: foodSpawnSlider.value(),
       poisonSpawnChance: poisonSpawnSlider.value(),
       reproduceChance: reproduceSlider.value()
     }
-  }, 'best-vehicle.json');
+  }, "best-vehicle.json");
+}
+
+function renderEnvironmentMaterials(material, clr) {
+  for (let i = 0; i < material.length; i++) {
+    fill(clr);
+    noStroke();
+    ellipse(material[i].x, material[i].y, 4, 4);
+  }
 }
 
 function draw() {
@@ -229,65 +243,59 @@ function draw() {
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
   reproduceDiv.html(`If conditions are optimal 2 vehicles have a  (${100 * reproduceSlider.value()}% chance of reproducing)`);
-  eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced resulting in ${Object.values(mutatedGenes).reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${Object.keys(mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, '')}</code>`);
+  eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced resulting in ${Object.values(mutatedGenes)
+    .reduce(
+      (a, b) => a + b,
+      0
+    )} mutations<br>The most mutated gene is <code>${Object.keys(
+      mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code>`);
 
   if (!paused) {
     if (random(1) < foodSpawnSlider.value()) {
-      let x = random(width);
-      let y = random(height);
-      food.push(createVector(x, y));
+      food.push(new Environmental(0.2));
     }
 
     if (random(1) < poisonSpawnSlider.value()) {
-      let x = random(width);
-      let y = random(height);
-      poison.push(createVector(x, y));
+      poison.push(new Environmental(-1.0));
     }
 
-    if (frameCount % 60 === 0) {
-      poison.splice(0, 1);
-    }
+    food = food.filter(item => !item.dead);
+    poison = poison.filter(item => !item.dead);
 
-    for (let i = 0; i < food.length; i++) {
-      fill(0, 255, 0);
-      noStroke();
-      ellipse(food[i].x, food[i].y, 4, 4);
-    }
+    food.forEach(item => {
+      item.update();
+      item.display();
+    });
 
-    for (let i = 0; i < poison.length; i++) {
-      fill(255, 0, 0);
-      noStroke();
-      ellipse(poison[i].x, poison[i].y, 4, 4);
-    }
+    poison.forEach(item => {
+      item.update();
+      item.display();
+    });
 
     for (let i = vehicles.length - 1; i >= 0; i--) {
-      vehicles[i].boundaries();
-      vehicles[i].behaviors(food, poison);
-      vehicles[i].altruism(vehicles);
-      let newVehicle = vehicles[i].reproduce(vehicles);
-      if (newVehicle != null) {
-        vehicles.push(newVehicle);
-      }
 
-      vehicles[i].update();
+      vehicles[i].tick(food, poison, vehicles);
       vehicles[i].display();
 
       if (vehicles[i].dead()) {
         dead++;
         let x = vehicles[i].position.x;
         let y = vehicles[i].position.y;
-        food.push(createVector(x, y));
+        for (let i = 0; i < 5; i++) {
+          food.push(new Environmental(0.2, x + random(-5, 5), y + random(-5, 5)));
+        }
         // if this is the largest population so far, keep track of it
         // and the last vehicle to survive in it
         highScore = dead + vehicles.length;
         if (vehicles.length === 1) {
           bestVehicle = vehicles[i];
-          saveBestVehicleButton.removeAttribute('disabled');
+          saveBestVehicleButton.removeAttribute("disabled");
         }
       }
     }
     vehicles = vehicles.filter(i => !i.dead());
-  } else {
+  }
+  else {
     for (let i = 0; i < food.length; i++) {
       fill(0, 255, 0);
       noStroke();

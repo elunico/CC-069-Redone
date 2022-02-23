@@ -16,7 +16,7 @@ class Gene {
     if (Math.random() < this.mutationRate) {
       let newProb = this.probability + this.randomDelta();
       mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
-      console.log(`Gene ${this.name} just mutated from ${this.probability} to ${newProb}`);
+      console.log(`Gene ${this.name} just mutated from ${this.probability} to ${newProb} (mr=${this.mutationRate})`);
       return new Gene(this.name, newProb, this.min, this.max);
     } else {
       return new Gene(this.name, this.probability, this.min, this.max);
