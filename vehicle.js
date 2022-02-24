@@ -1,10 +1,17 @@
 class Vehicle {
+
+  get r() {
+    return this.dna.getGene(maxSize);
+  }
+
+  get maxspeed() {
+    return this.dna.getGene(maxSpeed);
+  }
+
   constructor(x, y, dna, mr = 0.05) {
     this.acceleration = createVector(0, 0);
     this.velocity = p5.Vector.mult(p5.Vector.random2D(), random(-2, 2)); // createVector(0, -2);
     this.position = createVector(x, y);
-    this.r = 4;
-    this.maxspeed = 5;
     this.maxforce = 0.5;
     this.debugging = false;
 
@@ -51,6 +58,12 @@ class Vehicle {
 
       // determines how many SECONDS after the beginning lifetime of the vehicle before it can reproduce
       this.dna.addGene(new Gene(ageOfMaturity, random(2 * 60, 6 * 60), 2 * 60, 6 * 60, mr));
+
+      // adult size
+      this.dna.addGene(new Gene(adultSize, random(3, 7), 3, 7, mr));
+
+      // maximum speed
+      this.dna.addGene(new Gene(maxSpeed, random(3, 8), 3, 8, mr));
     }
     else {
       this.dna = dna.clone();
