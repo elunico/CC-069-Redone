@@ -84,3 +84,34 @@ Additional Changes
 On February 20, 2020, I duplicated this project to really clean up the code and change the style
 
 I began by moving constructor functions to ES6 classes and by changing all lets to vars where appropriate
+
+I refactored the DNA to be in separate objects along with the genes. To be honest I think this could be done a better way
+but the named constants are at least an improvement over indices into an array.
+
+I also made the vehicles robust against new genes, so if you add genes (correctly by following the instructions in the comments)
+loading vehicles from old save files will still work and the vehicles will just get a (reasonable) random gene value
+for any genes they have not been assigned. Though it should be noted that all new genes should be added AT THE END OF THE
+LIST because the list is ordered and adding one before the end will throw off the subsequent genes
+
+I also made size and maxspeed variable based on genes but without breaking old save files (see above)
+
+I added an Environmentals class to handle food and poison rendering and to enable them to be removed if they get too old. This
+both prevents the build up of unnecessary food and poison and also helps to mitigate situations where food and poison are
+too close together for the food to be usedful. This environmentals class was also necessary for another addition (the quadtree)
+which I explain there
+
+I also added a Quadtree. In fact, I added the exact implementation of Quadtrees from Coding Challenge 98 also by
+Dan Shiffman of the Coding Train. I made a small change to that challenge. Instead of making use of the
+userData property of the point class (the original class which is supposed to work with the Quadtree), I simply
+added an x and y property (with getter and setter) to my vehicle and environmental class thus allowing them to
+be directly inserted into the quadtree (rather than having them contained in a Point object). This vastly simplifies
+the addition of a quadtree because it eliminates the need to keep the (x, y) of the Point class in sync with the
+(x, y) of each vehicle. Every item (vehicle and environmental) is put into the quadtree and a type check is done
+after querying the tree to find the correct objects. Furthermore, when a vehicle encounters an environmental,
+it "consumes" it causing it to be removed, thus only one vehicle can eat a piece of food (or poison) rather than letting
+many vehicles pass and consume it each frame. This was originally done by removing the food/poison from the array,
+but now that the Environmental class exists, it keeps track of if the food/poison is "in play" so to speak. This is
+needed because the Environmental objects in the Quadtree cannot be easily removed, but they can be easily invalidated
+so that the next vehicle in the update loop that encounters it knows it cannot be eaten. This is perhaps a little hacky,
+but it does work. Then, before the next frame, all dead vehicles and invalid/expired Environmentals are pruned from the
+array. When the quadtree is rebuilt the next frame from the arrays, the invalid environmentals and dead vehicles are no longer present

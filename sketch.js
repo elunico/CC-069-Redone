@@ -33,6 +33,8 @@ let saveBestVehicleButton;
 let saveConfigurationButton;
 let loadButton;
 
+let qtree;
+
 function setup() {
   createCanvas(640, 360);
   for (let i = 0; i < population; i++) {
@@ -238,6 +240,8 @@ function saveBestVehicle() {
 function draw() {
   background(51);
 
+  qtree = new QuadTree(new Rectangle(0, 0, width, height), 4);
+
 
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
@@ -261,6 +265,10 @@ function draw() {
     food = food.filter(item => !item.dead);
     poison = poison.filter(item => !item.dead);
 
+    food.forEach(item => qtree.insert(item));
+    poison.forEach(item => qtree.insert(item));
+    vehicles.forEach(vehicle => qtree.insert(vehicle))
+
     food.forEach(item => {
       item.update();
       item.display();
@@ -270,6 +278,7 @@ function draw() {
       item.update();
       item.display();
     });
+
 
     vehicles.forEach((vehicle) => {
 

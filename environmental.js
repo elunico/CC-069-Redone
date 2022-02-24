@@ -1,4 +1,23 @@
 class Environmental {
+  /* FOR QUADTREE */
+  get x() {
+    return this.position.x;
+  }
+
+  set x(value) {
+    this.position.x = value
+  }
+
+  get y() {
+    return this.position.y;
+  }
+
+  set y(value) {
+    this.position.y = value
+  }
+
+  /* END FOR QUADTREE */
+
   constructor(health_value, x, y) {
     x = x || random(width);
     y = y || random(height);
@@ -7,6 +26,11 @@ class Environmental {
     this.color = health_value > 0 ? color(0, 255, 0) : color(255, 0, 0);
     this.existingFrames = 0;
     this.maxFrames = 3500;
+    this.valid = true;
+  }
+
+  invalidate() {
+    this.valid = false;
   }
 
   update() {
@@ -14,7 +38,7 @@ class Environmental {
   }
 
   get dead() {
-    return this.existingFrames >= this.maxFrames;
+    return this.existingFrames >= this.maxFrames || !this.valid;
   }
 
   display() {

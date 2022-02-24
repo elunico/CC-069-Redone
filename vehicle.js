@@ -1,12 +1,32 @@
 class Vehicle {
 
   get r() {
-    return this.dna.getGene(maxSize);
+    return this.dna.getGene(adultSize);
   }
 
   get maxspeed() {
     return this.dna.getGene(maxSpeed);
   }
+
+  /* FOR QUADTREE */
+  get x() {
+    return this.position.x;
+  }
+
+  set x(value) {
+    this.position.x = value
+  }
+
+  get y() {
+    return this.position.y;
+  }
+
+  set y(value) {
+    this.position.y = value
+  }
+
+  /* END FOR QUADTREE */
+
 
   constructor(x, y, dna, mr = 0.05) {
     this.acceleration = createVector(0, 0);
@@ -68,6 +88,13 @@ class Vehicle {
     else {
       this.dna = dna.clone();
     }
+
+    // needed for the quadtree. might be better to taylor but since the perceptions are similar, we just do this once
+    this.maxPerception = this.findMaxPerception();
+  }
+
+  findMaxPerception() {
+    return max([this.dna.getGene(foodPerception), this.dna.getGene(poisonPerception), this.dna.getGene(helpPerception), this.dna.getGene(othersPerception)])
   }
 
   tick(food, poison, vehicles) {
@@ -134,7 +161,9 @@ class Vehicle {
     let record = Infinity;
     let nearest = null;
 
-    for (let other of vehicles) {
+    // for (let other of vehicles) {
+    for (let other of qtree.query(new Circle(this.position.x, this.position.y, perceptionDistance))) {
+      if (!(other instanceof Vehicle)) { continue; }
       if (other !== this) {
         let d = this.position.dist(other.position);
         if (d < record) {
@@ -157,18 +186,22 @@ class Vehicle {
   seekEnvironmentals(list, perception) {
     let record = Infinity;
     let closest = null;
-    for (let i = list.length - 1; i >= 0; i--) {
-      let d = this.position.dist(list[i].position);
+    // for (let i = list.length - 1; i >= 0; i--) {
+    for (let other of qtree.query(new Circle(this.position.x, this.position.y, perception))) {
+      if (!(other instanceof Environmental)) {
+        continue;
+      }
+      let d = this.position.dist(other.position);
 
-      if (d < this.maxspeed) {
-        this.health += list[i].health_value;
-        // eagerly splice so that the next vehicle in update does not attempt to eat this food also
-        list.splice(i, 1);
+      if (d < this.maxspeed && other.valid) {
+        this.health += other.health_value;
+        // mark the food as invalid so that the next vehicle in update does not attempt to eat this food also
+        other.invalidate();
       }
       else {
         if (d < record && d < perception) {
           record = d;
-          closest = list[i];
+          closest = other;
         }
       }
     }
@@ -185,10 +218,14 @@ class Vehicle {
   // performs the actual donation of food if a vehicle is close enough to do it and
   // based on probability of donation
   attemptAltruism(vehicles) {
-    for (let vehicle of vehicles) {
+    // for (let vehicle of vehicles) {
+    let perception = this.dna.getGene(othersPerception);
+    for (let vehicle of qtree.query(new Circle(this.position.x, this.position.y, perception))) {
+      if (!(vehicle instanceof Vehicle)) { continue; }
+
       if (vehicle !== this) {
         let d = this.position.dist(vehicle.position);
-        if (d < this.dna.getGene(othersPerception)) {
+        if (d < perception) {
           if (random(1) < this.dna.getGene(donationChance)) {
             vehicle.health += 0.1; // half the food score
             this.health -= 0.1; // simulates sharing a piece of food by 1/2
@@ -203,12 +240,14 @@ class Vehicle {
   attemptReproduction(vehicles) {
     let nearest = null;
     let record = Infinity;
-    for (let i = 0; i < vehicles.length; i++) {
-      if (this !== vehicles[i]) {
-        let d = this.position.dist(vehicles[i].position);
+    // for (let i = 0; i < vehicles.length; i++) {
+    for (let vehicle of qtree.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)))){
+      if (!(vehicle instanceof Vehicle)) { continue; }
+      if (this !== vehicle) {
+        let d = this.position.dist(vehicle.position);
         if (d < record) {
           record = d;
-          nearest = vehicles[i];
+          nearest = vehicle;
         }
       }
     }
