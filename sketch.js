@@ -83,6 +83,13 @@ function setup() {
     }
   });
 
+  let foodAddButton = createButton("Add way too much food");
+  foodAddButton.mousePressed(() => {
+    for (let i = 0; i < 1000; i++) {
+      food.push(new Environmental(0.2));
+    }
+  });
+
   createDiv("<h3>Controlling the Environment</h3>");
 
   foodDiv = createDiv("");
@@ -228,14 +235,6 @@ function saveBestVehicle() {
   }, "best-vehicle.json");
 }
 
-function renderEnvironmentMaterials(material, clr) {
-  for (let i = 0; i < material.length; i++) {
-    fill(clr);
-    noStroke();
-    ellipse(material[i].x, material[i].y, 4, 4);
-  }
-}
-
 function draw() {
   background(51);
 
@@ -272,15 +271,15 @@ function draw() {
       item.display();
     });
 
-    for (let i = vehicles.length - 1; i >= 0; i--) {
+    vehicles.forEach((vehicle) => {
 
-      vehicles[i].tick(food, poison, vehicles);
-      vehicles[i].display();
+      vehicle.tick(food, poison, vehicles);
+      vehicle.display();
 
-      if (vehicles[i].dead()) {
+      if (vehicle.dead()) {
         dead++;
-        let x = vehicles[i].position.x;
-        let y = vehicles[i].position.y;
+        let x = vehicle.position.x;
+        let y = vehicle.position.y;
         for (let i = 0; i < 5; i++) {
           food.push(new Environmental(0.2, x + random(-5, 5), y + random(-5, 5)));
         }
@@ -288,24 +287,20 @@ function draw() {
         // and the last vehicle to survive in it
         highScore = dead + vehicles.length;
         if (vehicles.length === 1) {
-          bestVehicle = vehicles[i];
+          bestVehicle = vehicle;
           saveBestVehicleButton.removeAttribute("disabled");
         }
       }
-    }
+    });
     vehicles = vehicles.filter(i => !i.dead());
   }
   else {
     for (let i = 0; i < food.length; i++) {
-      fill(0, 255, 0);
-      noStroke();
-      ellipse(food[i].x, food[i].y, 4, 4);
+      food[i].display();
     }
 
     for (let i = 0; i < poison.length; i++) {
-      fill(255, 0, 0);
-      noStroke();
-      ellipse(poison[i].x, poison[i].y, 4, 4);
+      poison[i].display();
     }
 
     for (let i = vehicles.length - 1; i >= 0; i--) {

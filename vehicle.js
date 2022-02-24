@@ -1,7 +1,7 @@
 class Vehicle {
   constructor(x, y, dna, mr = 0.05) {
     this.acceleration = createVector(0, 0);
-    this.velocity = createVector(0, -2);
+    this.velocity = p5.Vector.mult(p5.Vector.random2D(), random(-2, 2)); // createVector(0, -2);
     this.position = createVector(x, y);
     this.r = 4;
     this.maxspeed = 5;
@@ -139,57 +139,6 @@ class Vehicle {
     }
   }
 
-
-  // performs the actual donation of food if a vehicle is close enough to do it and
-  // based on probability of donation
-  attemptAltruism(others) {
-    for (let vehicle of others) {
-      if (vehicle !== this) {
-        let d = this.position.dist(vehicle.position);
-        if (d < this.dna.getGene(othersPerception)) {
-          if (random(1) < this.dna.getGene(donationChance)) {
-            vehicle.health += 0.1; // half the food score
-            this.health -= 0.1; // simulates sharing a piece of food by 1/2
-          }
-        }
-      }
-    }
-  }
-
-  // Performs the reproduction if two vehicles are close enough provided all other
-  // factors are ok such as lastReproduced time, age of maturity, etc.
-  attemptReproduction(population) {
-    let nearest = null;
-    let record = Infinity;
-    for (let i = 0; i < population.length; i++) {
-      if (this !== population[i]) {
-        let d = this.position.dist(population[i].position);
-        if (d < record) {
-          record = d;
-          nearest = population[i];
-        }
-      }
-    }
-
-    // check for perceptionRadius,
-    // then old enough to reproduce (contained in DNA)
-    // then have not recently reproduced (variable 1-3 seconds but not in DNA)
-    // then chance to reproduce
-    if (record < this.dna.getGene(othersPerception) && this.livingFrames > this.dna.getGene(ageOfMaturity) && (this.livingFrames - this.lastReproduced) > (60 * random(
-      1.5,
-      5
-    )) && random(1) < reproduceSlider.value()) {
-      console.log("~ Reproduction event ~");
-      numReproduced++;
-      let dna = this.dna.crossover(nearest.dna);
-      this.lastReproduced = this.livingFrames;
-      return new Vehicle(this.position.x, this.position.y, dna);
-    }
-    else {
-      return null;
-    }
-  }
-
   // Determines the steer forces applicable to particular elements of the environment
   // like food and poison
   seekEnvironmentals(list, perception) {
@@ -218,6 +167,58 @@ class Vehicle {
     }
 
     return createVector(0, 0);
+  }
+
+  // performs the actual donation of food if a vehicle is close enough to do it and
+  // based on probability of donation
+  attemptAltruism(vehicles) {
+    for (let vehicle of vehicles) {
+      if (vehicle !== this) {
+        let d = this.position.dist(vehicle.position);
+        if (d < this.dna.getGene(othersPerception)) {
+          if (random(1) < this.dna.getGene(donationChance)) {
+            vehicle.health += 0.1; // half the food score
+            this.health -= 0.1; // simulates sharing a piece of food by 1/2
+          }
+        }
+      }
+    }
+  }
+
+  // Performs the reproduction if two vehicles are close enough provided all other
+  // factors are ok such as lastReproduced time, age of maturity, etc.
+  attemptReproduction(vehicles) {
+    let nearest = null;
+    let record = Infinity;
+    for (let i = 0; i < vehicles.length; i++) {
+      if (this !== vehicles[i]) {
+        let d = this.position.dist(vehicles[i].position);
+        if (d < record) {
+          record = d;
+          nearest = vehicles[i];
+        }
+      }
+    }
+
+    // check for perceptionRadius,
+    // then old enough to reproduce (contained in DNA)
+    // then have not recently reproduced (variable 1-3 seconds but not in DNA)
+    // then chance to reproduce
+    if (
+      record < this.dna.getGene(othersPerception) &&
+      this.livingFrames > this.dna.getGene(ageOfMaturity) &&
+      (this.livingFrames - this.lastReproduced) > (60 * random(1.5, 5)) &&
+      random(1) < reproduceSlider.value()
+    ) {
+      console.log("~ Reproduction event ~");
+      numReproduced++;
+      let dna = this.dna.crossover(nearest.dna);
+      this.lastReproduced = this.livingFrames;
+      return new Vehicle(this.position.x, this.position.y, dna);
+    }
+    else {
+      return null;
+    }
   }
 
   // A generic method that calculates a steering force towards any target
@@ -280,12 +281,7 @@ class Vehicle {
     }
 
     if (debug.checked()) {
-      if (dist(mouseX, mouseY, this.position.x, this.position.y) < 50) {
-        this.debugging = true;
-      }
-      else {
-        this.debugging = false;
-      }
+      this.debugging = dist(mouseX, mouseY, this.position.x, this.position.y) < 50;
     }
     else {
       this.debugging = false;
@@ -349,8 +345,6 @@ class Vehicle {
     }
 
     if (desired !== null) {
-      desired.normalize();
-      desired.mult(this.maxspeed);
       let steer = p5.Vector.sub(desired, this.velocity);
       steer.limit(this.maxforce);
       this.applyForce(steer);
