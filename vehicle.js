@@ -1,7 +1,7 @@
 class Vehicle {
 
   get r() {
-    return this.dna.getGene(maxSize);
+    return this.dna.getGene(adultSize);
   }
 
   get maxspeed() {
