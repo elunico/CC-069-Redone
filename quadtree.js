@@ -8,6 +8,11 @@
 // For more:
 // https://github.com/CodingTrain/QuadTree
 
+/*
+  Give your class an x and y getter and setter to enable it to be inserted into the quadtree.
+  Any class that provides get/set x and y should be able to be inserted into the quadtree.
+*/
+
 class Rectangle {
   constructor(x, y, w, h) {
     this.x = x;

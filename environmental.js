@@ -5,7 +5,7 @@ class Environmental {
   }
 
   set x(value) {
-    this.position.x = value
+    this.position.x = value;
   }
 
   get y() {
@@ -13,9 +13,8 @@ class Environmental {
   }
 
   set y(value) {
-    this.position.y = value
+    this.position.y = value;
   }
-
   /* END FOR QUADTREE */
 
   constructor(health_value, x, y) {
@@ -55,5 +54,17 @@ class Environmental {
     strokeWeight(4);
     point(0, 0);
     pop();
+  }
+}
+
+class Food extends Environmental {
+  constructor(x, y) {
+    super(0.2, x, y);
+  }
+}
+
+class Poison extends Environmental {
+  constructor(x, y) {
+    super(-1, x, y);
   }
 }

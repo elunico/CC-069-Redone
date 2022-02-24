@@ -14,7 +14,7 @@ class Vehicle {
   }
 
   set x(value) {
-    this.position.x = value
+    this.position.x = value;
   }
 
   get y() {
@@ -22,9 +22,8 @@ class Vehicle {
   }
 
   set y(value) {
-    this.position.y = value
+    this.position.y = value;
   }
-
   /* END FOR QUADTREE */
 
 
@@ -68,7 +67,6 @@ class Vehicle {
       // controls how strongly vehicles will prefer seeking help to other things
       // also weighs how willing they are to steer towards someone in need. Presumably this could change
       this.dna.addGene(new Gene(helpDesire, random(-2, 2), -2, 2, mr));
-      // this.dna.addGene(new Gene(helpPerception, random(0, 100), 0, 100, mr));
 
       // controls how likely is it that vehicle gives away food and health to a less well off vehicle
       this.dna.addGene(new Gene(pityChance, random(0, 1), 0, 1, mr));
@@ -84,6 +82,9 @@ class Vehicle {
 
       // maximum speed
       this.dna.addGene(new Gene(maxSpeed, random(3, 8), 3, 8, mr));
+
+      // malice chance - the chance that, when encountering another vehicle, this vehicle will kill it
+      this.dna.addGene(new Gene(maliceChance, random(0, 0.05), 0, 0.05, mr));
     }
     else {
       this.dna = dna.clone();
@@ -94,16 +95,17 @@ class Vehicle {
   }
 
   findMaxPerception() {
-    return max([this.dna.getGene(foodPerception), this.dna.getGene(poisonPerception), this.dna.getGene(helpPerception), this.dna.getGene(othersPerception)])
+    return max([this.dna.getGene(foodPerception), this.dna.getGene(poisonPerception), this.dna.getGene(othersPerception)]);
   }
 
-  tick(food, poison, vehicles) {
-    this.doMovementBehavior(food, poison, vehicles);
-    this.attemptAltruism(vehicles);
-    let newVehicle = this.attemptReproduction(vehicles);
+  tick(world) {
+    this.doMovementBehavior(world);
+    this.attemptAltruism(world);
+    let newVehicle = this.attemptReproduction(world);
     if (newVehicle != null) {
       vehicles.push(newVehicle);
     }
+    this.attemptMalice(world);
 
     this.update();
   }
@@ -133,12 +135,15 @@ class Vehicle {
   // accumulates all the forces that move the vehicle based on environmental things
   // like food and poison as well as the other vehicles in the system
   // All are weighted by the DNA of the vehicles
-  doMovementBehavior(good, bad, others) {
-    let steerG = this.seekEnvironmentals(good, this.dna.getGene(foodPerception));
-    let steerB = this.seekEnvironmentals(bad, this.dna.getGene(poisonPerception));
-    let mateSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
-    let helpSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
-    let altruismSteer = this.seekVehicles(others, this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
+  // Vehicles can be violent towards each other, but do not currently seek others FOR violence
+  // this simulates the idea of normally seeking food, help, and mates and possibly having
+  // a chance to kill each other presumably based on fights, competition, etc.
+  doMovementBehavior(world) {
+    let steerG = this.seekEnvironmentals(world, Food, this.dna.getGene(foodPerception));
+    let steerB = this.seekEnvironmentals(world, Poison, this.dna.getGene(poisonPerception));
+    let mateSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
+    let helpSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
+    let altruismSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
 
     steerG.mult(this.dna.getGene(foodDesire));
     steerB.mult(this.dna.getGene(poisonDesire));
@@ -157,12 +162,11 @@ class Vehicle {
 
   // use perception and willingness (from DNA) to determine the force pushing
   // the vehicle towards other members of the population
-  seekVehicles(vehicles, perceptionDistance, willingness) {
+  seekVehicles(world, perceptionDistance, willingness) {
     let record = Infinity;
     let nearest = null;
 
-    // for (let other of vehicles) {
-    for (let other of qtree.query(new Circle(this.position.x, this.position.y, perceptionDistance))) {
+    for (let other of world.query(new Circle(this.position.x, this.position.y, perceptionDistance))) {
       if (!(other instanceof Vehicle)) { continue; }
       if (other !== this) {
         let d = this.position.dist(other.position);
@@ -183,12 +187,11 @@ class Vehicle {
 
   // Determines the steer forces applicable to particular elements of the environment
   // like food and poison
-  seekEnvironmentals(list, perception) {
+  seekEnvironmentals(world, type, perception) {
     let record = Infinity;
     let closest = null;
-    // for (let i = list.length - 1; i >= 0; i--) {
-    for (let other of qtree.query(new Circle(this.position.x, this.position.y, perception))) {
-      if (!(other instanceof Environmental)) {
+    for (let other of world.query(new Circle(this.position.x, this.position.y, perception))) {
+      if (!(other instanceof type)) {
         continue;
       }
       let d = this.position.dist(other.position);
@@ -217,17 +220,16 @@ class Vehicle {
 
   // performs the actual donation of food if a vehicle is close enough to do it and
   // based on probability of donation
-  attemptAltruism(vehicles) {
-    // for (let vehicle of vehicles) {
+  attemptAltruism(world) {
     let perception = this.dna.getGene(othersPerception);
-    for (let vehicle of qtree.query(new Circle(this.position.x, this.position.y, perception))) {
-      if (!(vehicle instanceof Vehicle)) { continue; }
+    for (let other of world.query(new Circle(this.position.x, this.position.y, perception))) {
+      if (!(other instanceof Vehicle)) { continue; }
 
-      if (vehicle !== this) {
-        let d = this.position.dist(vehicle.position);
+      if (other !== this) {
+        let d = this.position.dist(other.position);
         if (d < perception) {
           if (random(1) < this.dna.getGene(donationChance)) {
-            vehicle.health += 0.1; // half the food score
+            other.health += 0.1; // half the food score
             this.health -= 0.1; // simulates sharing a piece of food by 1/2
           }
         }
@@ -237,17 +239,16 @@ class Vehicle {
 
   // Performs the reproduction if two vehicles are close enough provided all other
   // factors are ok such as lastReproduced time, age of maturity, etc.
-  attemptReproduction(vehicles) {
+  attemptReproduction(world) {
     let nearest = null;
     let record = Infinity;
-    // for (let i = 0; i < vehicles.length; i++) {
-    for (let vehicle of qtree.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)))){
-      if (!(vehicle instanceof Vehicle)) { continue; }
-      if (this !== vehicle) {
-        let d = this.position.dist(vehicle.position);
+    for (let other of world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)))) {
+      if (!(other instanceof Vehicle)) { continue; }
+      if (this !== other) {
+        let d = this.position.dist(other.position);
         if (d < record) {
           record = d;
-          nearest = vehicle;
+          nearest = other;
         }
       }
     }
@@ -271,6 +272,36 @@ class Vehicle {
     else {
       return null;
     }
+  }
+
+  attemptMalice(world) {
+    let nearest = null;
+    let record = Infinity;
+    let vicinity = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+    for (let other of vicinity) {
+      if (!(other instanceof Vehicle)) { continue; }
+      if (this !== other) {
+        let d = this.position.dist(other.position);
+        if (d < record) {
+          record = d;
+          nearest = other;
+        }
+      }
+    }
+
+    if (
+      record < this.dna.getGene(adultSize) * 2 &&
+      vicinity.length < 3 &&
+      random(1) < this.dna.getGene(maliceChance)
+    ) {
+      console.log("~ Malice event ~");
+      this.health += nearest.health / 2;
+      nearest.health = -Infinity; // dial m for murder
+      // do not remove nearest from the array, if "nearest" gets the chance
+      // it can also kill a vehicle or its assailant
+      // kind of unrealistic but I'll allow it for now
+    }
+
   }
 
   // A generic method that calculates a steering force towards any target

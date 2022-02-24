@@ -1,21 +1,17 @@
 const population = 200;
 
 let vehicles = [];
-let dead = 0;
 let food = [];
 let poison = [];
+let dead = 0;
 
 // keep track of the largest population and the last surviving vehicle of that population
 let highScore = -Infinity;
 let bestVehicle;
 
-let debug;
-
 let currentFPS;
-let pauseButton;
-let addNewButton;
-let resetButton;
 
+let debug;
 let paused = false;
 
 let numReproduced = 0;
@@ -32,11 +28,14 @@ let reproduceSlider;
 let saveBestVehicleButton;
 let saveConfigurationButton;
 let loadButton;
+let pauseButton;
+let addNewButton;
+let resetButton;
 
 let qtree;
 
 function setup() {
-  createCanvas(640, 360);
+  createCanvas(windowWidth / 1.5, windowHeight / 1.5);
   for (let i = 0; i < population; i++) {
     let x = random(width);
     let y = random(height);
@@ -44,11 +43,11 @@ function setup() {
   }
 
   for (let i = 0; i < 40; i++) {
-    food.push(new Environmental(0.2));
+    food.push(new Food());
   }
 
   for (let i = 0; i < 20; i++) {
-    poison.push(new Environmental(-1.0));
+    poison.push(new Poison());
   }
 
   debug = createCheckbox("Debug Visualization");
@@ -88,7 +87,7 @@ function setup() {
   let foodAddButton = createButton("Add way too much food");
   foodAddButton.mousePressed(() => {
     for (let i = 0; i < 1000; i++) {
-      food.push(new Environmental(0.2));
+      food.push(new Food());
     }
   });
 
@@ -255,11 +254,11 @@ function draw() {
 
   if (!paused) {
     if (random(1) < foodSpawnSlider.value()) {
-      food.push(new Environmental(0.2));
+      food.push(new Food());
     }
 
     if (random(1) < poisonSpawnSlider.value()) {
-      poison.push(new Environmental(-1.0));
+      poison.push(new Poison());
     }
 
     food = food.filter(item => !item.dead);
@@ -267,7 +266,7 @@ function draw() {
 
     food.forEach(item => qtree.insert(item));
     poison.forEach(item => qtree.insert(item));
-    vehicles.forEach(vehicle => qtree.insert(vehicle))
+    vehicles.forEach(vehicle => qtree.insert(vehicle));
 
     food.forEach(item => {
       item.update();
@@ -282,7 +281,7 @@ function draw() {
 
     vehicles.forEach((vehicle) => {
 
-      vehicle.tick(food, poison, vehicles);
+      vehicle.tick(qtree);
       vehicle.display();
 
       if (vehicle.dead()) {
@@ -290,7 +289,7 @@ function draw() {
         let x = vehicle.position.x;
         let y = vehicle.position.y;
         for (let i = 0; i < 5; i++) {
-          food.push(new Environmental(0.2, x + random(-5, 5), y + random(-5, 5)));
+          food.push(new Food(x + random(-5, 5), y + random(-5, 5)));
         }
         // if this is the largest population so far, keep track of it
         // and the last vehicle to survive in it
