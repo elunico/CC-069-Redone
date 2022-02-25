@@ -75,13 +75,16 @@ class DNA {
   }
 
   addGene(gene) {
+    if (!(gene instanceof Gene)) {
+      throw new TypeError("gene must be a Gene object");
+    }
     this.genes[gene.name] = gene;
   }
 
-  clone() {
+  clone(perfectly = false) {
     let newGenes = {};
     for (let key of Object.keys(this.genes)) {
-      newGenes[key] = this.genes[key].clone();
+      newGenes[key] = this.genes[key].clone(perfectly);
     }
     return new DNA(newGenes);
   }
@@ -121,5 +124,17 @@ class DNA {
       dna.addGene(second.getGeneObject(name).clone());
     }
     return dna;
+  }
+
+  mutate() {
+    for (let key of Object.keys(this.genes)) {
+      this.genes[key].mutate();
+    }
+  }
+
+  setAllMutationRates(rate) {
+    for (let key of Object.keys(this.genes)) {
+      this.genes[key].mutationRate = rate;
+    }
   }
 }

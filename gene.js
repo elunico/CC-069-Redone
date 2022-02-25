@@ -12,8 +12,8 @@ class Gene {
     return Math.random() < 0.5 ? random(this.min * 0.1, this.max * 0.1) : -random(this.min * 0.1, this.max * 0.1);
   }
 
-  clone() {
-    if (Math.random() < this.mutationRate) {
+  clone(perfectly = false) {
+    if (!perfectly && Math.random() < this.mutationRate) {
       let newProb = this.probability + this.randomDelta();
       mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
       console.log(`Gene ${this.name} just mutated from ${this.probability} to ${newProb} (mr=${this.mutationRate})`);
@@ -21,5 +21,9 @@ class Gene {
     } else {
       return new Gene(this.name, this.probability, this.min, this.max);
     }
+  }
+
+  mutate() {
+    this.probability = Math.max(Math.min(this.probability + this.randomDelta(), this.max), this.min);
   }
 }
