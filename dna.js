@@ -105,6 +105,12 @@ class DNA {
     return this.genes[name];
   }
 
+  setGeneValue(name, value) {
+    let gene = this.getGeneObject(name);
+    gene.probability = value;
+    this.genes[name] = gene;
+  }
+
   crossover(other) {
     let dna = new DNA();
 

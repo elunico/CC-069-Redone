@@ -99,6 +99,7 @@ class Vehicle {
   }
 
   tick(world) {
+    // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
     this.attemptAltruism(world);
     let newVehicle = this.attemptReproduction(world);
@@ -106,6 +107,11 @@ class Vehicle {
       vehicles.push(newVehicle);
     }
     this.attemptMalice(world);
+
+    // other things exist in the environment but are not effected by genes or desires and so we handle these
+    // separately. The vehicles do not seek or flee from these but if they encounter them by chance, they
+    // will/can be affected by them
+    this.environmentAffects(world);
 
     this.update();
   }
@@ -197,8 +203,8 @@ class Vehicle {
       let d = this.position.dist(other.position);
 
       if (d < this.maxspeed && other.valid) {
-        this.health += other.health_value;
-        // mark the food as invalid so that the next vehicle in update does not attempt to eat this food also
+        other.affect(this);
+        // mark the food/poison as invalid so that the next vehicle in update does not attempt to eat this food also
         other.invalidate();
       }
       else {
@@ -210,12 +216,29 @@ class Vehicle {
     }
 
     // This is the moment of eating!
-
     if (closest != null) {
       return this.seek(closest.position);
     }
 
     return createVector(0, 0);
+  }
+
+  environmentAffects(world) {
+    // environmental affects that happen independently of the other vehicles or this vehicle's desires or genes
+    for (let other of world.query(new Circle(this.position.x, this.position.y, 100))) {
+      if (!(other instanceof PassiveEnvironmental)) {
+        continue;
+      }
+      let d = this.position.dist(other.position);
+
+      if (d < this.maxspeed && other.valid) {
+        // this.health += other.health_value;
+        other.affect(this);
+        // by default invalidating PassiveEnvironment objects does nothing but we still call this incase a subclass
+        // overwrites this method
+        other.invalidate();
+      }
+    }
   }
 
   // performs the actual donation of food if a vehicle is close enough to do it and

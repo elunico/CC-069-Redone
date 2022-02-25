@@ -3,6 +3,7 @@ const population = 200;
 let vehicles = [];
 let food = [];
 let poison = [];
+let environment = [];
 let dead = 0;
 
 // keep track of the largest population and the last surviving vehicle of that population
@@ -54,13 +55,8 @@ function setup() {
 
   pauseButton = createButton("Pause");
   pauseButton.mousePressed(() => {
-    if (paused) {
-      pauseButton.html("Pause");
-    }
-    else {
-      pauseButton.html("Resume");
-    }
     paused = !paused;
+    pauseButton.html(paused ? "Resume" : "Pause");
   });
 
   resetButton = createButton("Reset to new random population");
@@ -261,11 +257,17 @@ function draw() {
       poison.push(new Poison());
     }
 
+    if (random(1) < 0.005) {
+      environment.push(new RadiationSource());
+    }
+
     food = food.filter(item => !item.dead);
     poison = poison.filter(item => !item.dead);
+    environment = environment.filter(item => !item.dead);
 
     food.forEach(item => qtree.insert(item));
     poison.forEach(item => qtree.insert(item));
+    environment.forEach(item => qtree.insert(item));
     vehicles.forEach(vehicle => qtree.insert(vehicle));
 
     food.forEach(item => {
@@ -278,6 +280,10 @@ function draw() {
       item.display();
     });
 
+    environment.forEach(item => {
+      item.update();
+      item.display();
+    });
 
     vehicles.forEach((vehicle) => {
 
