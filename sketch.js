@@ -232,6 +232,18 @@ function saveBestVehicle() {
   }, "best-vehicle.json");
 }
 
+function mousePressed() {
+  if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
+    return;
+  }
+  let items = qtree.query(new Circle(mouseX, mouseY, 100));
+  for (let item of items) {
+    if (item instanceof Vehicle) {
+      item.health = -Infinity;
+    }
+  }
+}
+
 function draw() {
   background(51);
 
@@ -241,12 +253,9 @@ function draw() {
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
   reproduceDiv.html(`If conditions are optimal 2 vehicles have a  (${100 * reproduceSlider.value()}% chance of reproducing)`);
-  eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced resulting in ${Object.values(mutatedGenes)
-    .reduce(
-      (a, b) => a + b,
-      0
-    )} mutations<br>The most mutated gene is <code>${Object.keys(
-      mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code>`);
+  eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced.<p> There have been ${Object.values(mutatedGenes)
+    .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${Object.keys(
+      mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code></p>`);
 
   if (!paused) {
     if (random(1) < foodSpawnSlider.value()) {
@@ -309,6 +318,10 @@ function draw() {
     vehicles = vehicles.filter(i => !i.dead());
   }
   else {
+    for (let i = 0; i < environment.length; i++) {
+      environment[i].display();
+    }
+
     for (let i = 0; i < food.length; i++) {
       food[i].display();
     }

@@ -1,4 +1,5 @@
 class Gene {
+
   constructor(name, probability, min, max, mutationRate) {
     this.name = name;
     // TODO: should this be true or no?
@@ -7,9 +8,11 @@ class Gene {
     this.max = max;
     this.mutationRate = mutationRate;
   }
+
   randomDelta() {
     return Math.random() < 0.5 ? random(this.min * 0.1, this.max * 0.1) : -random(this.min * 0.1, this.max * 0.1);
   }
+
   clone(perfectly = false) {
     if (!perfectly && Math.random() < this.mutationRate) {
       let newProb = this.probability + this.randomDelta();
@@ -21,8 +24,10 @@ class Gene {
       return new Gene(this.name, this.probability, this.min, this.max, this.mutationRate);
     }
   }
+
   mutate() {
     console.log("Environmental mutation!");
+    mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
     this.probability = Math.max(Math.min(this.probability + this.randomDelta(), this.max), this.min);
   }
 }

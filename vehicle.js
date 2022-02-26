@@ -101,12 +101,13 @@ class Vehicle {
   tick(world) {
     // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
-    this.attemptAltruism(world);
-    let newVehicle = this.attemptReproduction(world);
+    let neighborhood = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+    this.attemptAltruism(neighborhood);
+    let newVehicle = this.attemptReproduction(neighborhood);
     if (newVehicle != null) {
       vehicles.push(newVehicle);
     }
-    this.attemptMalice(world);
+    this.attemptMalice(neighborhood);
 
     // other things exist in the environment but are not effected by genes or desires and so we handle these
     // separately. The vehicles do not seek or flee from these but if they encounter them by chance, they
@@ -147,9 +148,12 @@ class Vehicle {
   doMovementBehavior(world) {
     let steerG = this.seekEnvironmentals(world, Food, this.dna.getGene(foodPerception));
     let steerB = this.seekEnvironmentals(world, Poison, this.dna.getGene(poisonPerception));
-    let mateSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
-    let helpSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
-    let altruismSteer = this.seekVehicles(world, this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
+
+    let neighborhood = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+
+    let mateSteer = this.seekVehicles(neighborhood, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
+    let helpSteer = this.seekVehicles(neighborhood, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
+    let altruismSteer = this.seekVehicles(neighborhood, this.dna.getGene(othersPerception), this.dna.getGene(pityChance));
 
     steerG.mult(this.dna.getGene(foodDesire));
     steerB.mult(this.dna.getGene(poisonDesire));
@@ -168,11 +172,11 @@ class Vehicle {
 
   // use perception and willingness (from DNA) to determine the force pushing
   // the vehicle towards other members of the population
-  seekVehicles(world, perceptionDistance, willingness) {
+  seekVehicles(neighborhood, perceptionDistance, willingness) {
     let record = Infinity;
     let nearest = null;
 
-    for (let other of world.query(new Circle(this.position.x, this.position.y, perceptionDistance))) {
+    for (let other of neighborhood) {
       if (!(other instanceof Vehicle)) { continue; }
       if (other !== this) {
         let d = this.position.dist(other.position);
@@ -243,9 +247,9 @@ class Vehicle {
 
   // performs the actual donation of food if a vehicle is close enough to do it and
   // based on probability of donation
-  attemptAltruism(world) {
+  attemptAltruism(neighborhood) {
     let perception = this.dna.getGene(othersPerception);
-    for (let other of world.query(new Circle(this.position.x, this.position.y, perception))) {
+    for (let other of neighborhood) {
       if (!(other instanceof Vehicle)) { continue; }
 
       if (other !== this) {
@@ -262,10 +266,10 @@ class Vehicle {
 
   // Performs the reproduction if two vehicles are close enough provided all other
   // factors are ok such as lastReproduced time, age of maturity, etc.
-  attemptReproduction(world) {
+  attemptReproduction(neighborhood) {
     let nearest = null;
     let record = Infinity;
-    for (let other of world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)))) {
+    for (let other of neighborhood) {
       if (!(other instanceof Vehicle)) { continue; }
       if (this !== other) {
         let d = this.position.dist(other.position);
@@ -297,10 +301,10 @@ class Vehicle {
     }
   }
 
-  attemptMalice(world) {
+  attemptMalice(neighborhood) {
     let nearest = null;
     let record = Infinity;
-    let vicinity = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+    let vicinity = neighborhood;
     for (let other of vicinity) {
       if (!(other instanceof Vehicle)) { continue; }
       if (this !== other) {
@@ -416,18 +420,18 @@ class Vehicle {
 
     pop();
 
-    if (mouseIsPressed) {
-      push();
+    // if (mouseIsPressed) {
+    //   push();
 
-      translate(this.position.x, this.position.y);
-      stroke(255);
-      fill(0);
-      textSize(13);
-      text(`${nf(this.health, 1, 3)}`, 0, -30);
-      text(`${nf(this.maxFrames - this.livingFrames)}`, 0, -15);
+    //   translate(this.position.x, this.position.y);
+    //   stroke(255);
+    //   fill(0);
+    //   textSize(13);
+    //   text(`${nf(this.health, 1, 3)}`, 0, -30);
+    //   text(`${nf(this.maxFrames - this.livingFrames)}`, 0, -15);
 
-      pop();
-    }
+    //   pop();
+    // }
   }
 
   // applies a force that pushes vehicles who leave the window back into the window
