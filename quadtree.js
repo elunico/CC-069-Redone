@@ -1,6 +1,12 @@
 // Daniel Shiffman
 // http://codingtra.in
 // http://patreon.com/codingtrain
+
+function _typeq_check(type, object) {
+  if (type == null) return true;
+  else return object instanceof type;
+}
+
 class Rectangle {
 
   constructor(x, y, w, h) {
@@ -126,7 +132,7 @@ class QuadTree {
     }
   }
 
-  query(range, found) {
+  query(type, range, found) {
     if (!found) {
       found = [];
     }
@@ -134,20 +140,20 @@ class QuadTree {
       return found;
     }
     for (let p of this.points) {
-      if (range.contains(p)) {
+      if (_typeq_check(type, p) && range.contains(p)) {
         found.push(p);
       }
     }
     if (this.divided) {
-      this.northwest.query(range, found);
-      this.northeast.query(range, found);
-      this.southwest.query(range, found);
-      this.southeast.query(range, found);
+      this.northwest.query(type, range, found);
+      this.northeast.query(type, range, found);
+      this.southwest.query(type, range, found);
+      this.southeast.query(type, range, found);
     }
     return found;
   }
 
   all() {
-    return this.query(this.boundary);
+    return this.query(null, this.boundary);
   }
 }

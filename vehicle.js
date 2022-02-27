@@ -101,7 +101,7 @@ class Vehicle {
   tick(world) {
     // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
-    let neighborhood = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+    let neighborhood = world.query(Vehicle, new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
     this.attemptAltruism(neighborhood);
     let newVehicle = this.attemptReproduction(neighborhood);
     if (newVehicle != null) {
@@ -149,7 +149,7 @@ class Vehicle {
     let steerG = this.seekEnvironmentals(world, Food, this.dna.getGene(foodPerception));
     let steerB = this.seekEnvironmentals(world, Poison, this.dna.getGene(poisonPerception));
 
-    let neighborhood = world.query(new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+    let neighborhood = world.query(Vehicle, new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
 
     let mateSteer = this.seekVehicles(neighborhood, this.dna.getGene(othersPerception), this.dna.getGene(reproductionDesire));
     let helpSteer = this.seekVehicles(neighborhood, this.dna.getGene(othersPerception), this.health > 0.5 ? 0 : 1);
@@ -177,7 +177,6 @@ class Vehicle {
     let nearest = null;
 
     for (let other of neighborhood) {
-      if (!(other instanceof Vehicle)) { continue; }
       if (other !== this) {
         let d = this.position.dist(other.position);
         if (d < record) {
@@ -200,10 +199,7 @@ class Vehicle {
   seekEnvironmentals(world, type, perception) {
     let record = Infinity;
     let closest = null;
-    for (let other of world.query(new Circle(this.position.x, this.position.y, perception))) {
-      if (!(other instanceof type)) {
-        continue;
-      }
+    for (let other of world.query(type, new Circle(this.position.x, this.position.y, perception))) {
       let d = this.position.dist(other.position);
 
       if (d < this.maxspeed && other.valid) {
@@ -229,10 +225,7 @@ class Vehicle {
 
   environmentAffects(world) {
     // environmental affects that happen independently of the other vehicles or this vehicle's desires or genes
-    for (let other of world.query(new Circle(this.position.x, this.position.y, 100))) {
-      if (!(other instanceof PassiveEnvironmental)) {
-        continue;
-      }
+    for (let other of world.query(PassiveEnvironmental, new Circle(this.position.x, this.position.y, 100))) {
       let d = this.position.dist(other.position);
 
       if (d < this.maxspeed && other.valid) {
@@ -250,8 +243,6 @@ class Vehicle {
   attemptAltruism(neighborhood) {
     let perception = this.dna.getGene(othersPerception);
     for (let other of neighborhood) {
-      if (!(other instanceof Vehicle)) { continue; }
-
       if (other !== this) {
         let d = this.position.dist(other.position);
         if (d < perception) {
@@ -270,7 +261,6 @@ class Vehicle {
     let nearest = null;
     let record = Infinity;
     for (let other of neighborhood) {
-      if (!(other instanceof Vehicle)) { continue; }
       if (this !== other) {
         let d = this.position.dist(other.position);
         if (d < record) {
@@ -306,7 +296,6 @@ class Vehicle {
     let record = Infinity;
     let vicinity = neighborhood;
     for (let other of vicinity) {
-      if (!(other instanceof Vehicle)) { continue; }
       if (this !== other) {
         let d = this.position.dist(other.position);
         if (d < record) {

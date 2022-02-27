@@ -236,11 +236,9 @@ function mousePressed() {
   if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
     return;
   }
-  let items = qtree.query(new Circle(mouseX, mouseY, 100));
+  let items = qtree.query(Vehicle, new Circle(mouseX, mouseY, 100));
   for (let item of items) {
-    if (item instanceof Vehicle) {
-      item.health = -Infinity;
-    }
+    item.health = -Infinity;
   }
 }
 
@@ -248,7 +246,6 @@ function draw() {
   background(51);
 
   qtree = new QuadTree(new Rectangle(0, 0, width, height), 4);
-
 
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);

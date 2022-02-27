@@ -14,20 +14,17 @@ class Gene {
   }
 
   clone(perfectly = false) {
+    let dup = new Gene(this.name, this.probability, this.min, this.max, this.mutationRate);
     if (!perfectly && Math.random() < this.mutationRate) {
-      let newProb = this.probability + this.randomDelta();
-      mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
-      console.log(`Gene ${this.name} just mutated from ${this.probability} to ${newProb} (mr=${this.mutationRate})`);
-      return new Gene(this.name, newProb, this.min, this.max, this.mutationRate);
+      dup.mutate();
     }
-    else {
-      return new Gene(this.name, this.probability, this.min, this.max, this.mutationRate);
-    }
+    return dup;
   }
 
   mutate() {
-    console.log("Environmental mutation!");
+    let old = this.probability;
     mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
     this.probability = Math.max(Math.min(this.probability + this.randomDelta(), this.max), this.min);
+    console.log(`Gene ${this.name} just mutated from ${old} to ${this.probability} (mr=${this.mutationRate})`);
   }
 }
