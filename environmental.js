@@ -5,7 +5,7 @@ for (let i = 0; i < 63; i++) {
   SIN_LOOKUP[i] = Math.sin(i * 2 * Math.PI / 63);
 }
 
-class Environmental {
+class Environmental extends CustomEventTarget {
   /* FOR QUADTREE */
   get x() {
     return this.position.x;
@@ -38,6 +38,7 @@ class Environmental {
   }
 
   constructor(x, y, color, size) {
+    super();
     x = x || random(width);
     y = y || random(height);
     this.position = createVector(x, y);
@@ -65,6 +66,8 @@ class Food extends Environmental {
 
   affect(vehicle) {
     vehicle.health += 0.2;
+    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: 0.2, position: this.position } }));
+    this.dispatchEvent(new CustomEvent('eaten', { bubbles: true, detail: { agent: vehicle, position: this.position } }));
   }
 
   update() {
@@ -77,6 +80,7 @@ class Food extends Environmental {
 
   invalidate() {
     this.valid = false;
+    this.dispatchEvent(new CustomEvent('invalidate', { bubbles: true, detail: { type: 'food', position: this.position } }));
   }
 }
 
@@ -89,6 +93,8 @@ class Poison extends Environmental {
 
   affect(vehicle) {
     vehicle.health -= 1;
+    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: -1, position: this.position } }));
+    this.dispatchEvent(new CustomEvent('eaten', { bubbles: true, detail: { agent: vehicle, position: this.position } }));
   }
 
   update() {
@@ -101,6 +107,7 @@ class Poison extends Environmental {
 
   invalidate() {
     this.valid = false;
+    this.dispatchEvent(new CustomEvent('invalidate', { bubbles: true, detail: { type: 'poison', position: this.position } }));
   }
 }
 
@@ -123,6 +130,8 @@ class RadiationSource extends PassiveEnvironmental {
   affect(vehicle) {
     vehicle.health -= 0.1;
     vehicle.dna.mutate();
+    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: -0.1, position: this.position } }));
+    // does not dispatch eaten event because it is a passive environmental
   }
 
   update() {

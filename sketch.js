@@ -1,9 +1,10 @@
 const population = 200;
 
-let vehicles = [];
-let food = [];
-let poison = [];
-let environment = [];
+// let vehicles = [];
+// let food = [];
+// let poison = [];
+// let environment = [];
+let world;
 let dead = 0;
 
 // keep track of the largest population and the last surviving vehicle of that population
@@ -35,21 +36,57 @@ let resetButton;
 
 let qtree;
 
+// always double check
+window.addEventListener('beforeunload', event => {
+  event.preventDefault();
+  return event.returnValue = "Are you sure you want to exit?";
+});
+
+function vehicleSpawnHandler(event) {
+  let vehicle = event.detail.object;
+
+  if (vehicle instanceof Vehicle) {
+
+    vehicle.addEventListener('mutate', mutationHandler);
+    vehicle.addEventListener('reproduce', reproductionHandler);
+    vehicle.addEventListener('die', deadHandler);
+  }
+}
+
+function mutationHandler(event) {
+  mutatedGenes[event.detail.name] = (mutatedGenes[event.detail.name] || 0) + 1;
+}
+
+const reproductionHandler = (event) => {
+  numReproduced++;
+  // vehicles.push(event.detail.child);
+  world.vehicles.push(event.detail.child);
+};
+
+function deadHandler(event) {
+  let vehicle = event.detail; // the vehicle that died
+
+  dead++;
+  let x = vehicle.position.x;
+  let y = vehicle.position.y;
+  for (let i = 0; i < 5; i++) {
+    // food.push(new Food(x + random(-5, 5), y + random(-5, 5)));
+    world.createFood(x + random(-5, 5), y + random(-5, 5));
+  }
+  // if this is the largest population so far, keep track of it
+  // and the last vehicle to survive in it
+  highScore = dead + world.vehicles.length;
+  if (world.vehicles.length === 1) {
+    bestVehicle = vehicle;
+    saveBestVehicleButton.removeAttribute("disabled");
+  }
+}
+
 function setup() {
   createCanvas(windowWidth / 1.5, windowHeight / 1.5);
-  for (let i = 0; i < population; i++) {
-    let x = random(width);
-    let y = random(height);
-    vehicles[i] = new Vehicle(x, y);
-  }
-
-  for (let i = 0; i < 40; i++) {
-    food.push(new Food());
-  }
-
-  for (let i = 0; i < 20; i++) {
-    poison.push(new Poison());
-  }
+  world = new World(width, height, 100, 10, population);
+  world.addEventListener('spawn', vehicleSpawnHandler);
+  world.populate();
 
   debug = createCheckbox("Debug Visualization");
 
@@ -61,12 +98,12 @@ function setup() {
 
   resetButton = createButton("Reset to new random population");
   resetButton.mousePressed(() => {
-    vehicles = [];
+    world.vehicles = [];
     dead = 0;
     for (let i = 0; i < population; i++) {
       let x = random(width);
       let y = random(height);
-      vehicles[i] = new Vehicle(x, y);
+      world.createVehicle(x, y);
     }
   });
 
@@ -76,29 +113,30 @@ function setup() {
     for (let i = 0; i < 50; i++) {
       let x = random(width);
       let y = random(height);
-      vehicles.push(new Vehicle(x, y));
+      world.createVehicle(x, y);
+
     }
   });
 
   let foodAddButton = createButton("Add way too much food");
   foodAddButton.mousePressed(() => {
     for (let i = 0; i < 1000; i++) {
-      food.push(new Food());
+      world.createFood(random(width), random(height));
     }
   });
 
   createDiv("<h3>Controlling the Environment</h3>");
 
   foodDiv = createDiv("");
-  foodSpawnSlider = createSlider(0, 1, 0.25, 0.005);
+  foodSpawnSlider = createSlider(0, 1, 0.75, 0.005);
   foodSpawnSlider.style("width", "50%");
 
   poisonDiv = createDiv("");
-  poisonSpawnSlider = createSlider(0, 1, 0.155, 0.005);
+  poisonSpawnSlider = createSlider(0, 1, 0.055, 0.005);
   poisonSpawnSlider.style("width", "50%");
 
   reproduceDiv = createDiv("");
-  reproduceSlider = createSlider(0, 1, 0.5, 0.0025);
+  reproduceSlider = createSlider(0, 1, 0.85, 0.0025);
   reproduceSlider.style("width", "50%");
 
   createDiv("<h3>Reproduction &amp; Mutation events</h3>");
@@ -189,7 +227,7 @@ function loadConfigurationFromJSON(json) {
         );
         dna.addGene(gene);
       }
-      vehicles.push(new Vehicle(random(width), random(height), dna));
+      world.createVehicle(random(width), random(height), dna);
     }
     else if (Array.isArray(dnas[i])) {
       // old style loading
@@ -199,7 +237,7 @@ function loadConfigurationFromJSON(json) {
         dna.addGene(gene);
         console.log(gene);
       }
-      vehicles.push(new Vehicle(random(width), random(height), dna));
+      world.createVehicle(random(width), random(height), dna);
     }
     else {
       // console.log(dnas[i]);
@@ -254,83 +292,7 @@ function draw() {
     .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${Object.keys(
       mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code></p>`);
 
-  if (!paused) {
-    if (random(1) < foodSpawnSlider.value()) {
-      food.push(new Food());
-    }
-
-    if (random(1) < poisonSpawnSlider.value()) {
-      poison.push(new Poison());
-    }
-
-    if (random(1) < 0.005) {
-      environment.push(new RadiationSource());
-    }
-
-    food = food.filter(item => !item.dead);
-    poison = poison.filter(item => !item.dead);
-    environment = environment.filter(item => !item.dead);
-
-    food.forEach(item => qtree.insert(item));
-    poison.forEach(item => qtree.insert(item));
-    environment.forEach(item => qtree.insert(item));
-    vehicles.forEach(vehicle => qtree.insert(vehicle));
-
-    food.forEach(item => {
-      item.update();
-      item.display();
-    });
-
-    poison.forEach(item => {
-      item.update();
-      item.display();
-    });
-
-    environment.forEach(item => {
-      item.update();
-      item.display();
-    });
-
-    vehicles.forEach((vehicle) => {
-
-      vehicle.tick(qtree);
-      vehicle.display();
-
-      if (vehicle.dead()) {
-        dead++;
-        let x = vehicle.position.x;
-        let y = vehicle.position.y;
-        for (let i = 0; i < 5; i++) {
-          food.push(new Food(x + random(-5, 5), y + random(-5, 5)));
-        }
-        // if this is the largest population so far, keep track of it
-        // and the last vehicle to survive in it
-        highScore = dead + vehicles.length;
-        if (vehicles.length === 1) {
-          bestVehicle = vehicle;
-          saveBestVehicleButton.removeAttribute("disabled");
-        }
-      }
-    });
-    vehicles = vehicles.filter(i => !i.dead());
-  }
-  else {
-    for (let i = 0; i < environment.length; i++) {
-      environment[i].display();
-    }
-
-    for (let i = 0; i < food.length; i++) {
-      food[i].display();
-    }
-
-    for (let i = 0; i < poison.length; i++) {
-      poison[i].display();
-    }
-
-    for (let i = vehicles.length - 1; i >= 0; i--) {
-      vehicles[i].display();
-    }
-  }
+  world.tick();
 
   textAlign(CENTER, CENTER);
   textSize(18);
@@ -345,7 +307,7 @@ function draw() {
   textAlign(CENTER, CENTER);
   textSize(18);
   fill(240);
-  text(`Pop: ${vehicles.length}`, 40, 15);
+  text(`Pop: ${world.vehicles.length}`, 40, 15);
 
   textAlign(CENTER, CENTER);
   textSize(18);

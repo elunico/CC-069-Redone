@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+  <title>Events in the Sketch</title>
+  <style>
+    body {
+      font-family: "Helvetica Neue", "Helvetica", sans-serif;
+      margin: 2em;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    code {
+      font-size: 1.15em;
+    }
+
+    td,
+    tr,
+    th {
+      padding: 0.5em;
+      border: 1px solid black;
+
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 60%;
+    }
+
+    .single {
+      text-align: center;
+    }
+
+    .content {
+      width: 60%;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Events in the Sketch</h1>
+  <p class="content">This sketch makes heavy use of CustomEvents. See below for details on those events</p>
+  <p class="content">The primary purpose of these events is to be able to centralize actions taken on the entire world.
+    Rather than hook
+    deep into methods like <code>mutate()</code> in the Gene class, these events allow the establishing of global event
+    handlers that can respond to these changes to affect the world, manage lifespans, and update statistics</p>
+  <p class="content">
+    In addition all of these events, by default, bubble. Each class in the sketch inherits a <code>parentTarget</code>
+    property that, when set, allows events to bubble. This property must be set manually. For Vehicles, this is set to
+    the world, for Genes, it is set to DNA and DNA to Vehicle. The world does not get a parentTarget.
+  </p>
+  <p class="content">
+    In order for events to work properly, creation of objects should be delegated entirely to the appropriate methods in
+    the <code>world</code> object. Raw constructors should be avoided.
+  </p>
+  <a href="/">Back to program</a>
+  <p></p>
+  <table>
+    <thead>
+      <th>Event Name</th>
+      <th>Event Target</th>
+      <th>Description</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="single">
+          <code>die</code>
+        </td>
+        <td class="single">
+          <code>Vehicle</code>
+        </td>
+        <td>
+          Dispatched on a vehicle when the vehicle dies
+          <p></p>
+          Properties:
+          <ul>
+            <li><code>detail</code> — the vehicle that has died</li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>eat</code>
+        </td>
+        <td class="single">
+          <code>Vehicle</code>
+        </td>
+        <td>
+          Dispatched on a vehicle when it consumes an Environmental like food or poison or is affected by a
+          PassiveEnvironmental
+          <p></p>
+          Properties:
+          <ul>
+            <li><code>detail</code> — object</li>
+            <li>
+              <ul>
+                <li><code>augment</code> — the amount of change in health the object provides</li>
+                <li><code>position</code> — the position of the object that was eaten</li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>eaten</code>
+        </td>
+        <td class="single">
+          <code>Vehicle</code>
+        </td>
+        <td>Dispatched on an Environmental when the it effects the Vehicle consuming it. Never fired on
+          PassiveEnvironmentals which cannot be consumed. This event fires in
+          <code>affect</code>
+          <p></p>
+          Properties:
+          <ul>
+            <li><code>detail</code> — object</li>
+            <li>
+              <ul>
+                <li><code>agent</code> — the object which consumed the given Environmental</li>
+                <li><code>position</code> — the position of the object that was eaten</li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>invalidate</code>
+        </td>
+        <td class="single">
+          <code>Environmental</code>
+        </td>
+        <td>Dispatched on an Environmental when the it is <b>invalidated</b> by a Vehicle consuming it. Never fired on
+          PassiveEnvironmentals which cannot be consumed. This event fires in
+          <code>invalidate</code>
+          <p></p>
+          Properties:
+          <ul>
+            <li>
+              <code>detail</code> — object
+            </li>
+            <li>
+              <ul>
+                <li>
+                  <code>type</code> — the type of the Environmental (an actual class not string)
+                </li>
+                <li>
+                  <code>position</code> — the position of the object that was eaten
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>malice</code>
+        </td>
+        <td class="single">
+          <code>Vehicle</code>
+        </td>
+        <td>Dispatched on a vehicle when the vehicle commiting an act of malice performs the malice. This is an
+          asymmetric event. Only the attacking vehicle has the event dispatched on it
+
+          <p></p>
+          Properties:
+          <ul>
+            <li>
+              <code>detail</code> — object
+            </li>
+            <li>
+              <ul>
+                <li>
+                  <code>self</code> — the vehicle object doing the malice
+                </li>
+                <li>
+                  <code>target</code> — the vehicle object being affected by the malice
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>mutate</code>
+        </td>
+        <td class="single">
+          <code>Gene</code>
+        </td>
+        <td>Dispatched on a gene when the gene mutates
+          <p></p>
+          Properties:
+          <ul>
+            <li>
+              <code>detail</code> — object
+            </li>
+            <li>
+              <ul>
+                <li>
+                  <code>name</code> — the name (string) of this Gene
+                </li>
+                <li>
+                  <code>old</code> — the old value of the gene
+                </li>
+                <li>
+                  <code>current</code> — the current value after mutation
+                </li>
+                <li>
+                  <code>parent?</code> — the DNA object which owns this gene
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>reproduce</code>
+        </td>
+        <td class="single">
+          <code>Vehicle</code>
+        </td>
+        <td>Dispatched on a both vehicles when the vehicles reproduce. This is a <b>symmetric</b> event meaning it fires
+          twice (once on each vehicle) when two vehicles reproduce. It does <b>not</b> fire on the child
+          <p></p>
+          Properties:
+          <ul>
+            <li>
+              <code>detail</code> — object
+            </li>
+            <li>
+              <ul>
+                <li>
+                  <code>self</code> — the vehicle object that is reproducing. The second event will fire with self and
+                  partner reversed since this is a symmetric event
+                </li>
+                <li>
+                  <code>partner</code> — the vehicle reproducing with the current vehicle
+                </li>
+                <li>
+                  <code>child</code> — the vehicle that was created in reproduction. This will also appear once in each
+                  event.
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </td>
+      </tr>
+
+      <tr>
+        <td class="single">
+          <code>spawn</code>
+        </td>
+        <td class="single">
+          <code>World</code>
+
+        </td>
+        <td>Dispatched on the World object when it creates the given entity (Vehicle or Environmental)
+
+          <p></p>
+          Properties:
+          <ul>
+            <li>
+              <code>detail</code> — object
+            </li>
+            <li>
+              <ul>
+                <li>
+                  <code>type</code> — the type (class not string) of the object spawning
+                </li>
+                <li>
+                  <code>object</code> — the new, spawned object itself
+                </li>
+                <li>
+                  <code>position</code> — the location of the spawned object
+                </li>
+
+              </ul>
+            </li>
+          </ul>
+        </td>
+
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+
+</html>

@@ -1,6 +1,7 @@
-class Gene {
+class Gene extends CustomEventTarget {
 
   constructor(name, probability, min, max, mutationRate) {
+    super();
     this.name = name;
     // TODO: should this be true or no?
     this.probability = Math.max(Math.min(probability, max), min);
@@ -23,8 +24,9 @@ class Gene {
 
   mutate() {
     let old = this.probability;
-    mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
+    // mutatedGenes[this.name] = (mutatedGenes[this.name] || 0) + 1;
     this.probability = Math.max(Math.min(this.probability + this.randomDelta(), this.max), this.min);
-    console.log(`Gene ${this.name} just mutated from ${old} to ${this.probability} (mr=${this.mutationRate})`);
+    this.dispatchEvent(new CustomEvent('mutate', { bubbles: true, detail: { name: this.name, old, current: this.probability, parent: this.parentTarget } }));
+    // console.log(`Gene ${this.name} just mutated from ${old} to ${this.probability} (mr=${this.mutationRate})`);
   }
 }
