@@ -1,4 +1,4 @@
-class Vehicle {
+class Vehicle extends CustomEventTarget {
 
   get r() {
     return this.dna.getGene(adultSize);
@@ -28,6 +28,7 @@ class Vehicle {
 
 
   constructor(x, y, dna, mr = 0.05) {
+    super();
     this.acceleration = createVector(0, 0);
     this.velocity = p5.Vector.mult(p5.Vector.random2D(), random(-2, 2)); // createVector(0, -2);
     this.position = createVector(x, y);
@@ -89,6 +90,7 @@ class Vehicle {
     else {
       this.dna = dna.clone();
     }
+    this.dna.parentTarget = this;
 
     // needed for the quadtree. might be better to taylor but since the perceptions are similar, we just do this once
     this.maxPerception = this.findMaxPerception();
@@ -101,12 +103,11 @@ class Vehicle {
   tick(world) {
     // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
+
     let neighborhood = world.query(Vehicle, new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
+
     this.attemptAltruism(neighborhood);
-    let newVehicle = this.attemptReproduction(neighborhood);
-    if (newVehicle != null) {
-      vehicles.push(newVehicle);
-    }
+    this.attemptReproduction(neighborhood);
     this.attemptMalice(neighborhood);
 
     // other things exist in the environment but are not effected by genes or desires and so we handle these
@@ -115,6 +116,10 @@ class Vehicle {
     this.environmentAffects(world);
 
     this.update();
+
+    if (this.dead()) {
+      this.dispatchEvent(new CustomEvent('die', { detail: this }));
+    }
   }
 
   // Moves the vehicle and determines if it too old
@@ -284,7 +289,9 @@ class Vehicle {
       numReproduced++;
       let dna = this.dna.crossover(nearest.dna);
       this.lastReproduced = this.livingFrames;
-      return new Vehicle(this.position.x, this.position.y, dna);
+      let vehicle = new Vehicle(this.position.x, this.position.y, dna);
+      this.dispatchEvent(new CustomEvent("reproduce", { detail: { self: this, partner: nearest, child: vehicle } }));
+      return vehicle;
     }
     else {
       return null;
@@ -310,7 +317,7 @@ class Vehicle {
       vicinity.length < 3 &&
       random(1) < this.dna.getGene(maliceChance)
     ) {
-      console.log("~ Malice event ~");
+      this.dispatchEvent(new CustomEvent('malice', { detail: { self: this, target: nearest } }));
       this.health += nearest.health / 2;
       nearest.health = -Infinity; // dial m for murder
       // do not remove nearest from the array, if "nearest" gets the chance

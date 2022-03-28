@@ -69,8 +69,9 @@ function geneForName(name) {
 }
 
 
-class DNA {
+class DNA extends CustomEventTarget {
   constructor(genes) {
+    super();
     this.genes = genes || {};
   }
 
@@ -78,7 +79,8 @@ class DNA {
     if (!(gene instanceof Gene)) {
       throw new TypeError("gene must be a Gene object");
     }
-    this.genes[gene.name] = gene;
+    this.genes[gene.name] = gene.clone(true);
+    this.genes[gene.name].parentTarget = this;
   }
 
   clone(perfectly = false) {
