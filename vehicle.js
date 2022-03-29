@@ -118,7 +118,8 @@ class Vehicle extends CustomEventTarget {
     this.update();
 
     if (this.dead()) {
-      this.dispatchEvent(new CustomEvent('die', { detail: this }));
+      // this.dispatchEvent(new CustomEvent('die', { detail: this }));
+      EventDispatch.dispatchDie(this);
     }
   }
 
@@ -285,12 +286,12 @@ class Vehicle extends CustomEventTarget {
       (this.livingFrames - this.lastReproduced) > (60 * random(1.5, 5)) &&
       random(1) < reproduceSlider.value()
     ) {
-      console.log("~ Reproduction event ~");
       numReproduced++;
       let dna = this.dna.crossover(nearest.dna);
       this.lastReproduced = this.livingFrames;
       let vehicle = new Vehicle(this.position.x, this.position.y, dna);
-      this.dispatchEvent(new CustomEvent("reproduce", { detail: { self: this, partner: nearest, child: vehicle } }));
+      EventDispatch.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
+      EventDispatch.dispatchReproduce(this, nearest, vehicle);
       return vehicle;
     }
     else {
@@ -317,7 +318,8 @@ class Vehicle extends CustomEventTarget {
       vicinity.length < 3 &&
       random(1) < this.dna.getGene(maliceChance)
     ) {
-      this.dispatchEvent(new CustomEvent('malice', { detail: { self: this, target: nearest } }));
+      // this.dispatchEvent(new CustomEvent('malice', { detail: { self: this, target: nearest } }));
+      EventDispatch.dispatchMalice(this, nearest);
       this.health += nearest.health / 2;
       nearest.health = -Infinity; // dial m for murder
       // do not remove nearest from the array, if "nearest" gets the chance
@@ -415,19 +417,6 @@ class Vehicle extends CustomEventTarget {
     }
 
     pop();
-
-    // if (mouseIsPressed) {
-    //   push();
-
-    //   translate(this.position.x, this.position.y);
-    //   stroke(255);
-    //   fill(0);
-    //   textSize(13);
-    //   text(`${nf(this.health, 1, 3)}`, 0, -30);
-    //   text(`${nf(this.maxFrames - this.livingFrames)}`, 0, -15);
-
-    //   pop();
-    // }
   }
 
   // applies a force that pushes vehicles who leave the window back into the window

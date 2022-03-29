@@ -31,21 +31,21 @@ class World extends CustomEventTarget {
     let object = new type(x, y);
     object.parentTarget = this;
     this.environmentals.push(object);
-    this.dispatchEvent(new CustomEvent('spawn', { bubbles: true, detail: { type, object, position: { x, y } } }));
+    EventDispatch.dispatchSpawn(object, type, { x, y });
   }
 
   createFood(x, y) {
     const object = new Food(x, y);
     object.parentTarget = this;
     this.food.push(object);
-    this.dispatchEvent(new CustomEvent('spawn', { bubbles: true, detail: { type: Food, object, position: this.position } }));
+    EventDispatch.dispatchSpawn(object, Food, { x, y });
   }
 
   createPoison(x, y) {
     const object = new Poison(x, y);
     object.parentTarget = this;
     this.poison.push(object);
-    this.dispatchEvent(new CustomEvent('spawn', { bubbles: true, detail: { type: Poison, object, position: this.position } }));
+    EventDispatch.dispatchSpawn(object, Poison, { x, y });
   }
 
   createVehicle(x, y, dna) {
@@ -54,7 +54,7 @@ class World extends CustomEventTarget {
     const object = new Vehicle(x, y, dna);
     object.parentTarget = this;
     this.vehicles.push(object);
-    this.dispatchEvent(new CustomEvent('spawn', { bubbles: true, detail: { type: Vehicle, object, position: this.position } }));
+    EventDispatch.dispatchSpawn(object, Vehicle, { x, y });
   }
 
 

@@ -66,8 +66,8 @@ class Food extends Environmental {
 
   affect(vehicle) {
     vehicle.health += 0.2;
-    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: 0.2, position: this.position } }));
-    this.dispatchEvent(new CustomEvent('eaten', { bubbles: true, detail: { agent: vehicle, position: this.position } }));
+    EventDispatch.dispatchEat(vehicle, this);
+    EventDispatch.dispatchEaten(vehicle, this);
   }
 
   update() {
@@ -80,7 +80,7 @@ class Food extends Environmental {
 
   invalidate() {
     this.valid = false;
-    this.dispatchEvent(new CustomEvent('invalidate', { bubbles: true, detail: { type: 'food', position: this.position } }));
+    EventDispatch.dispatchInvalidate(this, Food);
   }
 }
 
@@ -93,8 +93,8 @@ class Poison extends Environmental {
 
   affect(vehicle) {
     vehicle.health -= 1;
-    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: -1, position: this.position } }));
-    this.dispatchEvent(new CustomEvent('eaten', { bubbles: true, detail: { agent: vehicle, position: this.position } }));
+    EventDispatch.dispatchEat(vehicle, this);
+    EventDispatch.dispatchEaten(vehicle, this);
   }
 
   update() {
@@ -107,7 +107,7 @@ class Poison extends Environmental {
 
   invalidate() {
     this.valid = false;
-    this.dispatchEvent(new CustomEvent('invalidate', { bubbles: true, detail: { type: 'poison', position: this.position } }));
+    EventDispatch.dispatchInvalidate(this, Poison);
   }
 }
 
@@ -130,7 +130,7 @@ class RadiationSource extends PassiveEnvironmental {
   affect(vehicle) {
     vehicle.health -= 0.1;
     vehicle.dna.mutate();
-    vehicle.dispatchEvent(new CustomEvent('eat', { bubbles: true, detail: { augment: -0.1, position: this.position } }));
+    EventDispatch.dispatchEat(vehicle, this);
     // does not dispatch eaten event because it is a passive environmental
   }
 

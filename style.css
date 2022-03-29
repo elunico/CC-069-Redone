@@ -33,3 +33,29 @@ canvas {
 h4 {
   margin: 0;
 }
+
+#most-recent-event {
+  font-size: larger;
+  font-family: sans-serif;
+  position: fixed;
+  top: 1em;
+  left: 1em;
+  border: 2px solid black;
+  box-shadow: 4px 4px 2px grey;
+  border-radius: 20px;
+  padding: 1em;
+  transform: translateX(-75%);
+  transition: transform 0.5s ease-in-out;
+  overflow: scroll;
+  height: 90%;
+  background-color: white;
+}
+
+#most-recent-event:hover {
+  transform: translateX(0);
+}
+
+#most-recent-event::before {
+  content: "Recent events: ";
+  font-weight: 800;
+}

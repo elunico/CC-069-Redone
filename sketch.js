@@ -1,9 +1,5 @@
 const population = 200;
 
-// let vehicles = [];
-// let food = [];
-// let poison = [];
-// let environment = [];
 let world;
 let dead = 0;
 
@@ -36,6 +32,10 @@ let resetButton;
 
 let qtree;
 
+let logEvents;
+let mostRecentEvent;
+let mostRecentInfo;
+
 // always double check
 window.addEventListener('beforeunload', event => {
   event.preventDefault();
@@ -46,7 +46,6 @@ function vehicleSpawnHandler(event) {
   let vehicle = event.detail.object;
 
   if (vehicle instanceof Vehicle) {
-
     vehicle.addEventListener('mutate', mutationHandler);
     vehicle.addEventListener('reproduce', reproductionHandler);
     vehicle.addEventListener('die', deadHandler);
@@ -57,11 +56,9 @@ function mutationHandler(event) {
   mutatedGenes[event.detail.name] = (mutatedGenes[event.detail.name] || 0) + 1;
 }
 
-const reproductionHandler = (event) => {
+function reproductionHandler(event) {
   numReproduced++;
-  // vehicles.push(event.detail.child);
-  world.vehicles.push(event.detail.child);
-};
+}
 
 function deadHandler(event) {
   let vehicle = event.detail; // the vehicle that died
@@ -70,7 +67,6 @@ function deadHandler(event) {
   let x = vehicle.position.x;
   let y = vehicle.position.y;
   for (let i = 0; i < 5; i++) {
-    // food.push(new Food(x + random(-5, 5), y + random(-5, 5)));
     world.createFood(x + random(-5, 5), y + random(-5, 5));
   }
   // if this is the largest population so far, keep track of it
@@ -87,6 +83,18 @@ function setup() {
   world = new World(width, height, 100, 10, population);
   world.addEventListener('spawn', vehicleSpawnHandler);
   world.populate();
+
+  mostRecentEvent = document.querySelector('#most-recent-event');
+  mostRecentInfo = document.querySelector('#most-recent-info');
+
+  world.addEventListener('*', event => {
+    if (logEvents) {
+      const child = document.createElement('li');
+      child.textContent = event.type;
+      mostRecentEvent.prepend(child);
+      setTimeout(() => mostRecentEvent.removeChild(child), 1000);
+    }
+  });
 
   debug = createCheckbox("Debug Visualization");
 
@@ -189,6 +197,10 @@ function keyPressed() {
   }
   else if (key === "r") {
     loop();
+  }
+  else if (key == 'l') {
+    logEvents = !logEvents;
+    mostRecentInfo.style.display = logEvents ? "none" : "block";
   }
 }
 
