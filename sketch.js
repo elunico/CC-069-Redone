@@ -41,6 +41,21 @@ window.addEventListener('beforeunload', event => {
   return event.returnValue = "Are you sure you want to exit?";
 });
 
+function saveFile(string, name, kind = 'application/json') {
+  let blob = new Blob([string], {
+    type: `${kind};charset=utf-8`
+  });
+  // saveAs(blob, name);
+  let a = document.createElement('a');
+  a.download = name;
+  a.href = URL.createObjectURL(blob);
+  a.style.opacity = 0;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+}
+
 function vehicleSpawnHandler(event) {
   let vehicle = event.detail.object;
 
@@ -169,8 +184,8 @@ function setup() {
 
   createP("");
 
-  // createDiv("<h3>Saving and Loading Popualtions</h3>");
-  createDiv("<h3> Saving and Loading is Currently Broken and will be fixed soon</h3>");
+  createDiv("<h3>Saving and Loading Popualtions</h3>");
+  // createDiv("<h3> Saving and Loading is Currently Broken and will be fixed soon</h3>");
 
   saveBestVehicleButton = createButton("Save Best Vehicle");
   saveBestVehicleButton.mousePressed(() => {
@@ -218,12 +233,22 @@ function keyPressed() {
 }
 
 function saveConfiguration() {
-  saveJSON({
+  saveFile([JSON.stringify({
     foodSpawnChance: foodSpawnSlider.value(),
     poisonSpawnChance: poisonSpawnSlider.value(),
     reproduceChance: reproduceSlider.value(),
-    dnas: world.vehicles.map(i => i.dna)
-  }, "configuration.json");
+    dnas: world.vehicles.map(v => v.dna)
+  }, function (key, value) {
+    if (key == '_parentTarget')
+      return undefined;
+    return value;
+  }, 2)], 'configuration.json');
+  // saveJSON({
+  //   foodSpawnChance: foodSpawnSlider.value(),
+  //   poisonSpawnChance: poisonSpawnSlider.value(),
+  //   reproduceChance: reproduceSlider.value(),
+  //   dnas: world.vehicles.map(i => i.dna)
+  // }, "configuration.json");
 }
 
 function loadConfigurationFromFile(file) {
@@ -250,6 +275,7 @@ function loadConfigurationFromJSON(json) {
           dnas[i].genes[keys[j]].mutationRate || 0.05
         );
         dna.addGene(gene);
+        console.log(gene);
       }
       world.createVehicle(random(width), random(height), dna);
     }
@@ -270,7 +296,7 @@ function loadConfigurationFromJSON(json) {
 }
 
 function saveBestVehicle() {
-  saveJSON({
+  saveFile([JSON.stringify({
     vehicle: {
       acceleration: [bestVehicle.acceleration.x, bestVehicle.acceleration.y, bestVehicle.acceleration.z],
       velocity: [bestVehicle.velocity.x, bestVehicle.velocity.y, bestVehicle.velocity.z],
@@ -289,9 +315,13 @@ function saveBestVehicle() {
     }, environment: {
       foodSpawnChance: foodSpawnSlider.value(),
       poisonSpawnChance: poisonSpawnSlider.value(),
-      reproduceChance: reproduceSlider.value()
+      reproduceChance: reproduceSlider.value(),
     }
-  }, "best-vehicle.json");
+  }, function (key, value) {
+    if (key == '_parentTarget')
+      return undefined;
+    return value;
+  }, 2)], "best-vehicle.json");
 }
 
 function mousePressed() {
