@@ -34,7 +34,6 @@ let qtree;
 
 let logEvents;
 let mostRecentEvent;
-let mostRecentInfo;
 
 // always double check
 window.addEventListener('beforeunload', event => {
@@ -61,7 +60,7 @@ function reproductionHandler(event) {
 }
 
 function deadHandler(event) {
-  let vehicle = event.detail; // the vehicle that died
+  let vehicle = event.detail.self; // the vehicle that died
 
   dead++;
   let x = vehicle.position.x;
@@ -85,11 +84,28 @@ function setup() {
   world.populate();
 
   mostRecentEvent = document.querySelector('#most-recent-event');
-  mostRecentInfo = document.querySelector('#most-recent-info');
+
+  mostRecentEvent.addEventListener('mouseover', event => {
+    logEvents = true;
+  });
+
+  mostRecentEvent.addEventListener('mouseout', event => {
+    logEvents = false;
+  });
 
   world.addEventListener('*', event => {
     if (logEvents) {
       const child = document.createElement('li');
+      child.style.color = {
+        'spawn': '#0f0',
+        'reproduce': '#00f',
+        'mutate': '#0aa',
+        'die': '#f00',
+        'invalidate': '#aaa',
+        'eat': '#0ff',
+        'eaten': '#000'
+
+      }[event.type];
       child.textContent = event.type;
       mostRecentEvent.prepend(child);
       setTimeout(() => mostRecentEvent.removeChild(child), 1000);
@@ -153,7 +169,8 @@ function setup() {
 
   createP("");
 
-  createDiv("<h3>Saving and Loading Popualtions</h3>");
+  // createDiv("<h3>Saving and Loading Popualtions</h3>");
+  createDiv("<h3> Saving and Loading is Currently Broken and will be fixed soon</h3>");
 
   saveBestVehicleButton = createButton("Save Best Vehicle");
   saveBestVehicleButton.mousePressed(() => {
@@ -198,10 +215,6 @@ function keyPressed() {
   else if (key === "r") {
     loop();
   }
-  else if (key == 'l') {
-    logEvents = !logEvents;
-    mostRecentInfo.style.display = logEvents ? "none" : "block";
-  }
 }
 
 function saveConfiguration() {
@@ -209,7 +222,7 @@ function saveConfiguration() {
     foodSpawnChance: foodSpawnSlider.value(),
     poisonSpawnChance: poisonSpawnSlider.value(),
     reproduceChance: reproduceSlider.value(),
-    dnas: vehicles.map(i => i.dna)
+    dnas: world.vehicles.map(i => i.dna)
   }, "configuration.json");
 }
 
@@ -223,7 +236,6 @@ function loadConfigurationFromJSON(json) {
   poisonSpawnSlider.value(json.poisonSpawnChance);
   reproduceSlider.value(json.reproduceChance);
   let dnas = json.dnas;
-  vehicles = [];
   for (let i = 0; i < dnas.length; i++) {
     if (!Array.isArray(dnas[i])) {
       // new style loading

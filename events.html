@@ -63,7 +63,7 @@
     Objects must extend the <code>CustomEventTarget</code> class in order to have these custom events dispatched on
     them.
   </p>
-  <a href="CC_069_Redone">Back to program</a>
+  <a href="../">Back to program</a>
   <p></p>
   <table>
     <thead>
@@ -80,11 +80,20 @@
           <code>Vehicle</code>
         </td>
         <td>
-          Dispatched on a vehicle when the vehicle dies
+          Dispatched on a vehicle when the vehicle dies. If a vehicle dies due to two different causes, the event will
+          fire twice. Once for each cause.
+          This is possible if say, a vehicle has its health reduced to zero and passes the maximum lifespan in the same
+          frame.
           <p></p>
           Properties:
           <ul>
-            <li><code>detail</code> — the vehicle that has died</li>
+            <li><code>detail</code> — object</li>
+            <li>
+              <ul>
+                <li><code>self</code> — the vehicle that died</li>
+                <li><code>cause</code> — reason for death</li>
+              </ul>
+            </li>
           </ul>
         </td>
       </tr>
@@ -239,7 +248,11 @@
           <code>Vehicle</code>
         </td>
         <td>Dispatched on a both vehicles when the vehicles reproduce. This is a <b>symmetric</b> event meaning it fires
-          twice (once on each vehicle) when two vehicles reproduce. It does <b>not</b> fire on the child
+          twice (once on each vehicle) when two vehicles reproduce. It does <b>not</b> fire on the child; instead,
+          the <code>spawn</code> event is dispatched on the child as it would be for any newly created vehicle. This
+          event fires
+          <strong>once</strong> per reproduction even if the vehicles produce multiple children. The spawn event is,
+          however, dispatched on each child.
           <p></p>
           Properties:
           <ul>
@@ -256,11 +269,16 @@
                   <code>partner</code> — the vehicle reproducing with the current vehicle
                 </li>
                 <li>
-                  <code>child</code> — the vehicle that was created in reproduction. This will also appear once in each
-                  event.
+                  <code>children</code> — array
+                <li>
+                  an array containing all the children produced in this reproduction event
                 </li>
-              </ul>
             </li>
+            <li>
+              <code>childCount</code> - the number of offspring (litter size) produced by the reproduction.
+            </li>
+          </ul>
+          </li>
           </ul>
         </td>
       </tr>
@@ -273,7 +291,11 @@
           <code>World</code>
 
         </td>
-        <td>Dispatched on the World object when it creates the given entity (Vehicle or Environmental)
+        <td>Dispatched on the World object when it creates the given entity (Vehicle or Environmental). If two vehicles
+          reproduce
+          this event is fired for every spawned in new child, however, the <code>reproduce</code> event only fires once
+          per
+          reproduction regardless of litter size.
 
           <p></p>
           Properties:

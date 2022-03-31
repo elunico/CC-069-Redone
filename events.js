@@ -36,10 +36,13 @@ class CustomEventTarget extends EventTarget {
 }
 
 class EventDispatch {
-  static dispatchDie(vehicle) {
+  static dispatchDie(vehicle, cause) {
     vehicle.dispatchEvent(new CustomEvent('die', {
       bubbles: true,
-      detail: vehicle
+      detail: {
+        self: vehicle,
+        cause,
+      }
     }));
   }
 
@@ -83,13 +86,14 @@ class EventDispatch {
     }));
   }
 
-  static dispatchReproduce(vehicle, partner, child) {
+  static dispatchReproduce(vehicle, partner, child, childCount) {
     vehicle.dispatchEvent(new CustomEvent('reproduce', {
       bubbles: true,
       detail: {
         self: vehicle,
         partner: partner,
-        child: child
+        child: child,
+        childCount,
       }
     }));
   }

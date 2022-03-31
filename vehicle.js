@@ -86,6 +86,9 @@ class Vehicle extends CustomEventTarget {
 
       // malice chance - the chance that, when encountering another vehicle, this vehicle will kill it
       this.dna.addGene(new Gene(maliceChance, random(0, 0.05), 0, 0.05, mr));
+
+      // litter size - number of offspring produced in reproduction
+      this.dna.addGene(new Gene(litterSize, random(1, 3), 1, 20, mr));
     }
     else {
       this.dna = dna.clone();
@@ -107,6 +110,11 @@ class Vehicle extends CustomEventTarget {
     let neighborhood = world.query(Vehicle, new Circle(this.position.x, this.position.y, this.dna.getGene(othersPerception)));
 
     this.attemptAltruism(neighborhood);
+
+    if (this.dead()) {
+      EventDispatch.dispatchDie(this, 'over aultruistic');
+    }
+
     this.attemptReproduction(neighborhood);
     this.attemptMalice(neighborhood);
 
@@ -115,22 +123,27 @@ class Vehicle extends CustomEventTarget {
     // will/can be affected by them
     this.environmentAffects(world);
 
+    if (this.dead()) {
+      EventDispatch.dispatchDie(this, 'over environment/poison');
+    }
+
     this.update();
 
     if (this.dead()) {
-      // this.dispatchEvent(new CustomEvent('die', { detail: this }));
-      EventDispatch.dispatchDie(this);
+      EventDispatch.dispatchDie(this, 'hunger');
     }
+
+    if (this.livingFrames > this.maxFrames) {
+      this.health = -Infinity;
+      EventDispatch.dispatchDie(this, 'age');
+    }
+
   }
 
   // Moves the vehicle and determines if it too old
   update() {
     this.health -= 0.01;
     this.livingFrames++;
-
-    if (this.livingFrames > this.maxFrames) {
-      this.health = -Infinity;
-    }
 
     this.velocity.add(this.acceleration);
     this.velocity.limit(this.maxspeed);
@@ -235,7 +248,6 @@ class Vehicle extends CustomEventTarget {
       let d = this.position.dist(other.position);
 
       if (d < this.maxspeed && other.valid) {
-        // this.health += other.health_value;
         other.affect(this);
         // by default invalidating PassiveEnvironment objects does nothing but we still call this incase a subclass
         // overwrites this method
@@ -286,13 +298,17 @@ class Vehicle extends CustomEventTarget {
       (this.livingFrames - this.lastReproduced) > (60 * random(1.5, 5)) &&
       random(1) < reproduceSlider.value()
     ) {
-      numReproduced++;
       let dna = this.dna.crossover(nearest.dna);
       this.lastReproduced = this.livingFrames;
-      let vehicle = new Vehicle(this.position.x, this.position.y, dna);
-      EventDispatch.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
-      EventDispatch.dispatchReproduce(this, nearest, vehicle);
-      return vehicle;
+      let offspringCount = this.dna.getGene(litterSize);
+      let children = [];
+      for (let i = 0; i < offspringCount; i++) {
+        let vehicle = new Vehicle(this.position.x, this.position.y, dna);
+        EventDispatch.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
+        children.push(vehicle);
+      }
+      EventDispatch.dispatchReproduce(this, nearest, children, offspringCount);
+      return children;
     }
     else {
       return null;
@@ -319,9 +335,9 @@ class Vehicle extends CustomEventTarget {
       random(1) < this.dna.getGene(maliceChance)
     ) {
       // this.dispatchEvent(new CustomEvent('malice', { detail: { self: this, target: nearest } }));
-      EventDispatch.dispatchMalice(this, nearest);
       this.health += nearest.health / 2;
       nearest.health = -Infinity; // dial m for murder
+      EventDispatch.dispatchMalice(this, nearest);
       // do not remove nearest from the array, if "nearest" gets the chance
       // it can also kill a vehicle or its assailant
       // kind of unrealistic but I'll allow it for now
@@ -371,7 +387,7 @@ class Vehicle extends CustomEventTarget {
       stroke(col);
     }
 
-    if (this.livingFrames > 120) {
+    if (this.livingFrames > this.dna.getGene(ageOfMaturity)) {
       fill(col);
       beginShape();
       vertex(0, -this.r * 2);

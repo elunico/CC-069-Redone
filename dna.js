@@ -18,17 +18,18 @@ const ageOfMaturity = "age-of-maturity";
 const adultSize = "adult-size";
 const maxSpeed = "max-speed";
 const maliceChance = 'malice-chance';
+const litterSize = 'litter-size';
 
 // Used for loading old format of DNA of vehicles
 function maxForGene(number) {
   return {
-    0: 2, 1: 2, 2: 100, 3: 100, 4: 110, 5: 1, 6: 2, 7: 1, 8: 2, 9: 6 * 60, 10: 7, 11: 8, 12: 0.05
+    0: 2, 1: 2, 2: 100, 3: 100, 4: 110, 5: 1, 6: 2, 7: 1, 8: 2, 9: 6 * 60, 10: 7, 11: 8, 12: 0.05, 13: 20
   }[number];
 }
 
 function minForGene(number) {
   return {
-    0: -2, 1: -2, 2: 0, 3: 0, 4: 0, 5: 0, 6: -2, 7: 0, 8: -2, 9: 2 * 60, 10: 3, 11: 3, 12: 0
+    0: -2, 1: -2, 2: 0, 3: 0, 4: 0, 5: 0, 6: -2, 7: 0, 8: -2, 9: 2 * 60, 10: 3, 11: 3, 12: 0, 13: 1
   }[number];
 }
 
@@ -47,6 +48,7 @@ function nameForGene(number) {
     10: adultSize,
     11: maxSpeed,
     12: maliceChance,
+    13: litterSize,
   }[number];
 }
 
@@ -65,6 +67,7 @@ function geneForName(name) {
     [adultSize]: 10,
     [maxSpeed]: 11,
     [maliceChance]: 12,
+    [litterSize]: 13,
   }[name];
 }
 
