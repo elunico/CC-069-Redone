@@ -62,6 +62,7 @@ class Food extends Environmental {
     super(x, y, color(0, 255, 0), 5);
     this.living_frames = 0;
     this.max_frames = 2000;
+    this.nutrition = 0.2;
   }
 
   affect(vehicle) {
@@ -89,6 +90,7 @@ class Poison extends Environmental {
     super(x, y, color(255, 0, 0), 5);
     this.living_frames = 0;
     this.max_frames = 2000;
+    this.nutrition = -1;
   }
 
   affect(vehicle) {

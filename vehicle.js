@@ -97,6 +97,10 @@ class Vehicle extends CustomEventTarget {
 
     // needed for the quadtree. might be better to taylor but since the perceptions are similar, we just do this once
     this.maxPerception = this.findMaxPerception();
+
+    this.addEventListener('konami', () => {
+      this.immortal = true; // this is a cheat
+    });
   }
 
   findMaxPerception() {
@@ -300,10 +304,11 @@ class Vehicle extends CustomEventTarget {
     ) {
       let dna = this.dna.crossover(nearest.dna);
       this.lastReproduced = this.livingFrames;
-      let offspringCount = this.dna.getGene(litterSize);
+      let offspringCount = floor(this.dna.getGene(litterSize));
       let children = [];
       for (let i = 0; i < offspringCount; i++) {
         let vehicle = new Vehicle(this.position.x, this.position.y, dna);
+        vehicle.parentTarget = this.parentTarget;
         EventDispatch.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
         children.push(vehicle);
       }
@@ -362,7 +367,7 @@ class Vehicle extends CustomEventTarget {
   }
 
   dead() {
-    return this.health < 0;
+    return !this.immortal && this.health < 0;
   }
 
   display() {

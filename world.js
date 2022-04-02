@@ -11,6 +11,7 @@ class World extends CustomEventTarget {
     this.food_count = food_count;
     this.poison_count = poison_count;
     this.vehicle_count = vehicle_count;
+
   }
 
   populate() {
@@ -53,73 +54,82 @@ class World extends CustomEventTarget {
     y = y || random(this.height);
     const object = new Vehicle(x, y, dna);
     object.parentTarget = this;
-    this.vehicles.push(object);
     EventDispatch.dispatchSpawn(object, Vehicle, { x, y });
   }
 
+  tickSpawnEnvironmentals() {
+    if (random(1) < foodSpawnSlider.value()) {
+      world.createFood();
+    }
+
+    if (random(1) < poisonSpawnSlider.value()) {
+      world.createPoison();
+    }
+
+    if (random(1) < 0.005) {
+      world.createEnvironmental(RadiationSource, random(width), random(height));
+    }
+  }
+
+  tickClearDeadEnvironmentals() {
+    this.food = this.food.filter(item => !item.dead);
+    this.poison = this.poison.filter(item => !item.dead);
+    this.environmentals = this.environmentals.filter(item => !item.dead);
+  }
+
+  tickBuildQuadtree(qtree) {
+    this.food.forEach(item => qtree.insert(item));
+    this.poison.forEach(item => qtree.insert(item));
+    this.environmentals.forEach(item => qtree.insert(item));
+    this.vehicles.forEach(vehicle => qtree.insert(vehicle));
+  }
+
+  tickUpdateAndDisplay(qtree) {
+    this.food.forEach(item => {
+      item.update();
+      item.display();
+    });
+
+    this.poison.forEach(item => {
+      item.update();
+      item.display();
+    });
+
+    this.environmentals.forEach(item => {
+      item.update();
+      item.display();
+    });
+
+    this.vehicles.forEach((vehicle) => {
+      vehicle.tick(qtree);
+      vehicle.display();
+    });
+  }
+
+  normalTick() {
+    let qtree = new QuadTree(new Rectangle(0, 0, width, height), 4);
+
+    this.tickClearDeadEnvironmentals();
+    this.tickSpawnEnvironmentals();
+    this.tickBuildQuadtree(qtree);
+
+    this.tickUpdateAndDisplay(qtree);
+
+    this.vehicles = this.vehicles.filter(i => !i.dead());
+
+  }
+
+  pausedTick() {
+    this.environmentals.forEach(item => item.display());
+    this.food.forEach(item => item.display());
+    this.poison.forEach(item => item.display());
+    this.vehicles.forEach(item => item.display());
+  }
 
   tick() {
-    if (!paused) {
-      if (random(1) < foodSpawnSlider.value()) {
-        world.createFood();
-      }
-
-      if (random(1) < poisonSpawnSlider.value()) {
-        world.createPoison();
-      }
-
-      if (random(1) < 0.005) {
-        world.createEnvironmental(RadiationSource, random(width), random(height));
-      }
-
-      this.food = this.food.filter(item => !item.dead);
-      this.poison = this.poison.filter(item => !item.dead);
-      this.environmentals = this.environmentals.filter(item => !item.dead);
-
-      this.food.forEach(item => qtree.insert(item));
-      this.poison.forEach(item => qtree.insert(item));
-      this.environmentals.forEach(item => qtree.insert(item));
-      this.vehicles.forEach(vehicle => qtree.insert(vehicle));
-
-      this.food.forEach(item => {
-        item.update();
-        item.display();
-      });
-
-      this.poison.forEach(item => {
-        item.update();
-        item.display();
-      });
-
-      this.environmentals.forEach(item => {
-        item.update();
-        item.display();
-      });
-
-      this.vehicles.forEach((vehicle) => {
-
-        vehicle.tick(qtree);
-        vehicle.display();
-
-      });
-      this.vehicles = this.vehicles.filter(i => !i.dead());
-    }
-    else {
-      for (let i = 0; i < this.environmentals.length; i++) {
-        this.environmentals[i].display();
-      }
-
-      for (let i = 0; i < this.food.length; i++) {
-        this.food[i].display();
-      }
-
-      for (let i = 0; i < this.poison.length; i++) {
-        this.poison[i].display();
-      }
-
-      for (let i = this.vehicles.length - 1; i >= 0; i--) {
-        this.vehicles[i].display();
-      }
-    }
+    if (!paused)
+      this.normalTick();
+    else
+      this.pausedTick();
   }
 }

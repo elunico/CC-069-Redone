@@ -157,3 +157,29 @@ class QuadTree {
     return this.query(null, this.boundary);
   }
 }
+
+
+class FakeQuadTree {
+
+  constructor() {
+    this.contents = [];
+  }
+
+  insert(point) {
+    this.contents.push(point);
+  }
+
+  query(type) {
+    let found = [];
+    for (let p of this.contents) {
+      if (_typeq_check(type, p)) {
+        found.push(p);
+      }
+    }
+    return found;
+  }
+
+  all() {
+    return this.contents;
+  }
+}

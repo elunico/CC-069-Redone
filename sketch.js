@@ -25,41 +25,22 @@ let poisonSpawnSlider;
 let reproduceSlider;
 let saveBestVehicleButton;
 let saveConfigurationButton;
+let eventFilter;
 let loadButton;
 let pauseButton;
 let addNewButton;
 let resetButton;
 
-let qtree;
-
 let logEvents;
 let mostRecentEvent;
+let immortality = false; // if true, vehicles will not die
 
-// always double check
-window.addEventListener('beforeunload', event => {
-  event.preventDefault();
-  return event.returnValue = "Are you sure you want to exit?";
-});
-
-function saveFile(string, name, kind = 'application/json') {
-  let blob = new Blob([string], {
-    type: `${kind};charset=utf-8`
-  });
-  // saveAs(blob, name);
-  let a = document.createElement('a');
-  a.download = name;
-  a.href = URL.createObjectURL(blob);
-  a.style.opacity = 0;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-}
 
 function vehicleSpawnHandler(event) {
   let vehicle = event.detail.object;
 
   if (vehicle instanceof Vehicle) {
+    world.vehicles.push(vehicle);
     vehicle.addEventListener('mutate', mutationHandler);
     vehicle.addEventListener('reproduce', reproductionHandler);
     vehicle.addEventListener('die', deadHandler);
@@ -83,9 +64,7 @@ function deadHandler(event) {
   for (let i = 0; i < 5; i++) {
     world.createFood(x + random(-5, 5), y + random(-5, 5));
   }
-  // if this is the largest population so far, keep track of it
-  // and the last vehicle to survive in it
-  highScore = dead + world.vehicles.length;
+
   if (world.vehicles.length === 1) {
     bestVehicle = vehicle;
     saveBestVehicleButton.removeAttribute("disabled");
@@ -98,32 +77,37 @@ function setup() {
   world.addEventListener('spawn', vehicleSpawnHandler);
   world.populate();
 
-  mostRecentEvent = document.querySelector('#most-recent-event');
+  recentContainer = document.querySelector('#recent-container');
 
-  mostRecentEvent.addEventListener('mouseover', event => {
+  recentContainer.addEventListener('mouseover', event => {
     logEvents = true;
   });
 
-  mostRecentEvent.addEventListener('mouseout', event => {
+  recentContainer.addEventListener('mouseout', event => {
     logEvents = false;
   });
 
+  const mostRecentEvent = document.querySelector('#most-recent-event');
+
+  eventFilter = createSelect();
+  const filterContainer = select('#filter-selection');
+  eventFilter.parent(filterContainer);
+  eventFilter.option('All');
+  for (let eventName of eventNames) {
+    eventFilter.option(eventName);
+  }
+
   world.addEventListener('*', event => {
     if (logEvents) {
-      const child = document.createElement('li');
-      child.style.color = {
-        'spawn': '#0f0',
-        'reproduce': '#00f',
-        'mutate': '#0aa',
-        'die': '#f00',
-        'invalidate': '#aaa',
-        'eat': '#0ff',
-        'eaten': '#000'
-
-      }[event.type];
-      child.textContent = event.type;
-      mostRecentEvent.prepend(child);
-      setTimeout(() => mostRecentEvent.removeChild(child), 1000);
+      const filterName = eventFilter.value();
+      if (filterName === 'All' || filterName === event.type) {
+        const child = document.createElement('li');
+        child.style.color = eventColors[event.type];
+        // child.textContent = event.type;
+        child.textContent = stringifyEvent(event);
+        mostRecentEvent.prepend(child);
+        setTimeout(() => mostRecentEvent.removeChild(child), 2000);
+      }
     }
   });
 
@@ -223,7 +207,19 @@ function loadOptimalNoCluster() {
   });
 }
 
+let konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+let kCheck = [];
+
 function keyPressed() {
+  kCheck.push(keyCode);
+  if (kCheck.length > konamiCode.length) {
+    kCheck.shift();
+  }
+  if (kCheck.toString() === konamiCode.toString()) {
+    immortality = !immortality;
+    kCheck = [];
+  }
+
   if (key === " ") {
     noLoop();
   }
@@ -328,16 +324,18 @@ function mousePressed() {
   if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
     return;
   }
-  let items = qtree.query(Vehicle, new Circle(mouseX, mouseY, 100));
-  for (let item of items) {
-    item.health = -Infinity;
-  }
+  // TODO: Replace this with an event dispatch
+  // let items = qtree.query(Vehicle, new Circle(mouseX, mouseY, 100));
+  // for (let item of items) {
+  //   item.health = -Infinity;
+  // }
 }
 
 function draw() {
   background(51);
 
-  qtree = new QuadTree(new Rectangle(0, 0, width, height), 4);
+  console.log(kCheck);
+  console.log(immortality);
 
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
@@ -346,6 +344,7 @@ function draw() {
     .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${Object.keys(
       mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code></p>`);
 
+  world.vehicles.forEach(v => v.immortal = immortality);
   world.tick();
 
   textAlign(CENTER, CENTER);
@@ -356,7 +355,7 @@ function draw() {
     currentFPS = floor(frameRate());
   }
 
-  text(`High Score: ${highScore || 0}`, width - 80, 40);
+  text(`High Score: ${(world.vehicles.length + dead) || 0}`, width - 80, 40);
 
   textAlign(CENTER, CENTER);
   textSize(18);
