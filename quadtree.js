@@ -159,27 +159,16 @@ class QuadTree {
 }
 
 
+// A class with the signature of a quadtree but that acts like a plain array
+// This is used to compare the performance of the quadtree with an array
+// without having to change any of the code
 class FakeQuadTree {
 
-  constructor() {
-    this.contents = [];
-  }
+  constructor() { this.contents = []; }
 
-  insert(point) {
-    this.contents.push(point);
-  }
+  insert(point) { this.contents.push(point); }
 
-  query(type) {
-    let found = [];
-    for (let p of this.contents) {
-      if (_typeq_check(type, p)) {
-        found.push(p);
-      }
-    }
-    return found;
-  }
+  query(type) { return this.contents.filter(p => _typeq_check(type, p)); }
 
-  all() {
-    return this.contents;
-  }
+  all() { return this.contents.map(p => p); }
 }

@@ -25,6 +25,6 @@ class Gene extends CustomEventTarget {
   mutate() {
     let old = this.probability;
     this.probability = Math.max(Math.min(this.probability + this.randomDelta(), this.max), this.min);
-    EventDispatch.dispatchMutate(this, this.name, old, this.probability, this.parentTarget);
+    EventUtil.dispatchMutate(this, this.name, old, this.probability, this.parentTarget);
   }
 }

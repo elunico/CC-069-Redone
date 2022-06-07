@@ -32,21 +32,21 @@ class World extends CustomEventTarget {
     let object = new type(x, y);
     object.parentTarget = this;
     this.environmentals.push(object);
-    EventDispatch.dispatchSpawn(object, type, { x, y });
+    EventUtil.dispatchSpawn(object, type, { x, y });
   }
 
   createFood(x, y) {
     const object = new Food(x, y);
     object.parentTarget = this;
     this.food.push(object);
-    EventDispatch.dispatchSpawn(object, Food, { x, y });
+    EventUtil.dispatchSpawn(object, Food, { x, y });
   }
 
   createPoison(x, y) {
     const object = new Poison(x, y);
     object.parentTarget = this;
     this.poison.push(object);
-    EventDispatch.dispatchSpawn(object, Poison, { x, y });
+    EventUtil.dispatchSpawn(object, Poison, { x, y });
   }
 
   createVehicle(x, y, dna) {
@@ -54,7 +54,7 @@ class World extends CustomEventTarget {
     y = y || random(this.height);
     const object = new Vehicle(x, y, dna);
     object.parentTarget = this;
-    EventDispatch.dispatchSpawn(object, Vehicle, { x, y });
+    EventUtil.dispatchSpawn(object, Vehicle, { x, y });
   }
 
   tickSpawnEnvironmentals() {

@@ -97,10 +97,6 @@ class Vehicle extends CustomEventTarget {
 
     // needed for the quadtree. might be better to taylor but since the perceptions are similar, we just do this once
     this.maxPerception = this.findMaxPerception();
-
-    this.addEventListener('konami', () => {
-      this.immortal = true; // this is a cheat
-    });
   }
 
   findMaxPerception() {
@@ -116,7 +112,7 @@ class Vehicle extends CustomEventTarget {
     this.attemptAltruism(neighborhood);
 
     if (this.dead()) {
-      EventDispatch.dispatchDie(this, 'over aultruistic');
+      EventUtil.dispatchDie(this, 'over aultruistic');
     }
 
     this.attemptReproduction(neighborhood);
@@ -128,18 +124,18 @@ class Vehicle extends CustomEventTarget {
     this.environmentAffects(world);
 
     if (this.dead()) {
-      EventDispatch.dispatchDie(this, 'over environment/poison');
+      EventUtil.dispatchDie(this, 'over environment/poison');
     }
 
     this.update();
 
     if (this.dead()) {
-      EventDispatch.dispatchDie(this, 'hunger');
+      EventUtil.dispatchDie(this, 'hunger');
     }
 
     if (this.livingFrames > this.maxFrames) {
       this.health = -Infinity;
-      EventDispatch.dispatchDie(this, 'age');
+      EventUtil.dispatchDie(this, 'age');
     }
 
   }
@@ -297,6 +293,7 @@ class Vehicle extends CustomEventTarget {
     // then have not recently reproduced (variable 1-3 seconds but not in DNA)
     // then chance to reproduce
     if (
+      // TODO: maybe reproduction should be limited by the amount of health that the vehicle has
       record < this.dna.getGene(othersPerception) &&
       this.livingFrames > this.dna.getGene(ageOfMaturity) &&
       (this.livingFrames - this.lastReproduced) > (60 * random(1.5, 5)) &&
@@ -309,10 +306,10 @@ class Vehicle extends CustomEventTarget {
       for (let i = 0; i < offspringCount; i++) {
         let vehicle = new Vehicle(this.position.x, this.position.y, dna);
         vehicle.parentTarget = this.parentTarget;
-        EventDispatch.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
+        EventUtil.dispatchSpawn(vehicle, Vehicle, { x: vehicle.position.x, y: vehicle.position.y });
         children.push(vehicle);
       }
-      EventDispatch.dispatchReproduce(this, nearest, children, offspringCount);
+      EventUtil.dispatchReproduce(this, nearest, children, offspringCount);
       return children;
     }
     else {
@@ -342,7 +339,7 @@ class Vehicle extends CustomEventTarget {
       // this.dispatchEvent(new CustomEvent('malice', { detail: { self: this, target: nearest } }));
       this.health += nearest.health / 2;
       nearest.health = -Infinity; // dial m for murder
-      EventDispatch.dispatchMalice(this, nearest);
+      EventUtil.dispatchMalice(this, nearest);
       // do not remove nearest from the array, if "nearest" gets the chance
       // it can also kill a vehicle or its assailant
       // kind of unrealistic but I'll allow it for now

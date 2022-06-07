@@ -35,7 +35,7 @@ class CustomEventTarget extends EventTarget {
   }
 }
 
-class EventDispatch {
+class EventUtil {
   static dispatchDie(vehicle, cause) {
     vehicle.dispatchEvent(new CustomEvent('die', {
       bubbles: true,

@@ -67,8 +67,8 @@ class Food extends Environmental {
 
   affect(vehicle) {
     vehicle.health += 0.2;
-    EventDispatch.dispatchEat(vehicle, this);
-    EventDispatch.dispatchEaten(vehicle, this);
+    EventUtil.dispatchEat(vehicle, this);
+    EventUtil.dispatchEaten(vehicle, this);
   }
 
   update() {
@@ -81,7 +81,7 @@ class Food extends Environmental {
 
   invalidate() {
     this.valid = false;
-    EventDispatch.dispatchInvalidate(this, Food);
+    EventUtil.dispatchInvalidate(this, Food);
   }
 }
 
@@ -95,8 +95,8 @@ class Poison extends Environmental {
 
   affect(vehicle) {
     vehicle.health -= 1;
-    EventDispatch.dispatchEat(vehicle, this);
-    EventDispatch.dispatchEaten(vehicle, this);
+    EventUtil.dispatchEat(vehicle, this);
+    EventUtil.dispatchEaten(vehicle, this);
   }
 
   update() {
@@ -109,7 +109,7 @@ class Poison extends Environmental {
 
   invalidate() {
     this.valid = false;
-    EventDispatch.dispatchInvalidate(this, Poison);
+    EventUtil.dispatchInvalidate(this, Poison);
   }
 }
 
@@ -132,7 +132,7 @@ class RadiationSource extends PassiveEnvironmental {
   affect(vehicle) {
     vehicle.health -= 0.1;
     vehicle.dna.mutate();
-    EventDispatch.dispatchEat(vehicle, this);
+    EventUtil.dispatchEat(vehicle, this);
     // does not dispatch eaten event because it is a passive environmental
   }
 
