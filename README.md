@@ -1,4 +1,7 @@
 # CC-069-Redone
+
+### SEE THIS PROJECT LIVE ON [MY WEBSITE](https://eluni.co/CC-069-Redone)
+
 This is a large-scale refactoring of my version of the Coding Train's Coding Challenge 69 - Steering Behaviors
 
 Quite a while a go, I made some changes to the original code of Coding Challenge 69 from the Coding Train. 
