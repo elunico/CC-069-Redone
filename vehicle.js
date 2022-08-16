@@ -1,3 +1,7 @@
+function vecDistSq(a, b) {
+  return ((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+}
+
 class Vehicle extends CustomEventTarget {
 
   get r() {
@@ -197,7 +201,7 @@ class Vehicle extends CustomEventTarget {
 
     for (let other of neighborhood) {
       if (other !== this) {
-        let d = this.position.dist(other.position);
+        let d = vecDistSq(this.position, other.position); // this.position.dist(other.position);
         if (d < record) {
           nearest = other;
           record = d;
@@ -205,7 +209,7 @@ class Vehicle extends CustomEventTarget {
       }
     }
 
-    if (record < perceptionDistance && random(1) < willingness) {
+    if (record < (perceptionDistance * perceptionDistance) && random(1) < willingness) {
       return this.seek(nearest.position);
     }
     else {
@@ -219,15 +223,15 @@ class Vehicle extends CustomEventTarget {
     let record = Infinity;
     let closest = null;
     for (let other of world.query(type, new Circle(this.position.x, this.position.y, perception))) {
-      let d = this.position.dist(other.position);
+      let d = vecDistSq(this.position, other.position); // this.position.dist(other.position);
 
-      if (d < this.maxspeed && other.valid) {
+      if (d < (this.maxspeed * this.maxspeed) && other.valid) {
         other.affect(this);
         // mark the food/poison as invalid so that the next vehicle in update does not attempt to eat this food also
         other.invalidate();
       }
       else {
-        if (d < record && d < perception) {
+        if (d < record && d < (perception * perception)) {
           record = d;
           closest = other;
         }
@@ -245,9 +249,9 @@ class Vehicle extends CustomEventTarget {
   environmentAffects(world) {
     // environmental affects that happen independently of the other vehicles or this vehicle's desires or genes
     for (let other of world.query(PassiveEnvironmental, new Circle(this.position.x, this.position.y, 100))) {
-      let d = this.position.dist(other.position);
+      let d = vecDistSq(this.position, other.position); // this.position.dist(other.position);
 
-      if (d < this.maxspeed && other.valid) {
+      if (d < (this.maxspeed * this.maxspeed) && other.valid) {
         other.affect(this);
         // by default invalidating PassiveEnvironment objects does nothing but we still call this incase a subclass
         // overwrites this method
@@ -262,8 +266,8 @@ class Vehicle extends CustomEventTarget {
     let perception = this.dna.getGene(othersPerception);
     for (let other of neighborhood) {
       if (other !== this) {
-        let d = this.position.dist(other.position);
-        if (d < perception) {
+        let d = vecDistSq(this.position, other.position);
+        if (d < (perception * perception)) {
           if (random(1) < this.dna.getGene(donationChance)) {
             other.health += 0.1; // half the food score
             this.health -= 0.1; // simulates sharing a piece of food by 1/2
@@ -280,13 +284,16 @@ class Vehicle extends CustomEventTarget {
     let record = Infinity;
     for (let other of neighborhood) {
       if (this !== other) {
-        let d = this.position.dist(other.position);
+        let d = vecDistSq(this.position, other.position);
         if (d < record) {
           record = d;
           nearest = other;
         }
       }
     }
+
+    // sqrt once is better than in the for loop
+    record = sqrt(record);
 
     // check for perceptionRadius,
     // then old enough to reproduce (contained in DNA)
@@ -323,13 +330,16 @@ class Vehicle extends CustomEventTarget {
     let vicinity = neighborhood;
     for (let other of vicinity) {
       if (this !== other) {
-        let d = this.position.dist(other.position);
+        let d = vecDistSq(this.position, other.position);
         if (d < record) {
           record = d;
           nearest = other;
         }
       }
     }
+
+    // one sqrt better than in the for loop
+    record = sqrt(record);
 
     if (
       record < this.dna.getGene(adultSize) * 2 &&
@@ -407,7 +417,7 @@ class Vehicle extends CustomEventTarget {
     }
 
     if (debug.checked()) {
-      this.debugging = dist(mouseX, mouseY, this.position.x, this.position.y) < 50;
+      this.debugging = ((mouseX - this.position.x) * (mouseX - this.position.x) + (mouseY - this.position.x) * (mouseY - this.position.x)) < (50 * 50);
     }
     else {
       this.debugging = false;
