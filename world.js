@@ -12,6 +12,11 @@ class World extends CustomEventTarget {
     this.poison_count = poison_count;
     this.vehicle_count = vehicle_count;
 
+    this.nukeX = null;
+    this.nukeY = null;
+    this.nukeR = -1;
+
+    this.readyNuke = false;
   }
 
   populate() {
@@ -106,12 +111,26 @@ class World extends CustomEventTarget {
     });
   }
 
+  tickNuke(qtree) {
+    let nukeCenter = createVector(this.nukeX, this.nukeY);
+    if (this.readyNuke) {
+      let neighborhood = qtree.query(Vehicle, new Rectangle(this.nukeX, this.nukeY, 100, 100));
+      for (let thing of neighborhood) {
+        if (thing.position.dist(nukeCenter) < this.nukeR) {
+          thing.kill();
+        }
+      }
+    }
+    this.readyNuke = false;
+  }
+
   normalTick() {
     let qtree = new QuadTree(new Rectangle(0, 0, width, height), 4);
 
     this.tickClearDeadEnvironmentals();
     this.tickSpawnEnvironmentals();
     this.tickBuildQuadtree(qtree);
+    this.tickNuke(qtree);
 
     this.tickUpdateAndDisplay(qtree);
 
@@ -131,5 +150,12 @@ class World extends CustomEventTarget {
       this.normalTick();
     else
       this.pausedTick();
+  }
+
+  nuke(x, y, r) {
+    this.nukeX = x;
+    this.nukeY = y;
+    this.nukeR = r;
+    this.readyNuke = true;
   }
 }

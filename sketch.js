@@ -209,6 +209,7 @@ function loadOptimalNoCluster() {
 
 let konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 let kCheck = [];
+let killMode = false;
 
 function keyPressed() {
   kCheck.push(keyCode);
@@ -225,6 +226,18 @@ function keyPressed() {
   }
   else if (key === "r") {
     loop();
+  }
+  console.log(killMode);
+  if (key == "m") {
+    killMode = true;
+  }
+  console.log(killMode);
+
+}
+
+function keyReleased() {
+  if (key == 'm') {
+    killMode = false;
   }
 }
 
@@ -324,18 +337,15 @@ function mousePressed() {
   if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
     return;
   }
-  // TODO: Replace this with an event dispatch
-  // let items = qtree.query(Vehicle, new Circle(mouseX, mouseY, 100));
-  // for (let item of items) {
-  //   item.health = -Infinity;
-  // }
+
+  if (killMode) {
+    world.nuke(mouseX, mouseY, 100);
+  }
 }
 
 function draw() {
   background(51);
 
-  console.log(kCheck);
-  console.log(immortality);
 
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);

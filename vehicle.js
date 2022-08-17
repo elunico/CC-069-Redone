@@ -107,6 +107,11 @@ class Vehicle extends CustomEventTarget {
     return max([this.dna.getGene(foodPerception), this.dna.getGene(poisonPerception), this.dna.getGene(othersPerception)]);
   }
 
+  kill() {
+    this.health = -Infinity;
+    EventUtil.dispatchDie(this, 'killed by supernatural forces');
+  }
+
   tick(world) {
     // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
@@ -417,7 +422,7 @@ class Vehicle extends CustomEventTarget {
     }
 
     if (debug.checked()) {
-      this.debugging = ((mouseX - this.position.x) * (mouseX - this.position.x) + (mouseY - this.position.x) * (mouseY - this.position.x)) < (50 * 50);
+      this.debugging = ((mouseX - this.position.x) * (mouseX - this.position.x) + (mouseY - this.position.y) * (mouseY - this.position.y)) < (50 * 50);
     }
     else {
       this.debugging = false;
