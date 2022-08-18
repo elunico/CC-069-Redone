@@ -12,11 +12,12 @@ class World extends CustomEventTarget {
     this.poison_count = poison_count;
     this.vehicle_count = vehicle_count;
 
-    this.nukeX = null;
-    this.nukeY = null;
-    this.nukeR = -1;
-
-    this.readyNuke = false;
+    this._nuke = {
+      armed: false,
+      x: null,
+      y: null,
+      r: -1
+    };
   }
 
   populate() {
@@ -112,16 +113,16 @@ class World extends CustomEventTarget {
   }
 
   tickNuke(qtree) {
-    let nukeCenter = createVector(this.nukeX, this.nukeY);
-    if (this.readyNuke) {
-      let neighborhood = qtree.query(Vehicle, new Rectangle(this.nukeX, this.nukeY, 100, 100));
+    let nukeCenter = createVector(this._nuke.x, this._nuke.y);
+    if (this._nuke.armed) {
+      let neighborhood = qtree.query(Vehicle, new Rectangle(this._nuke.x, this._nuke.y, this._nuke.r, this._nuke.r));
       for (let thing of neighborhood) {
-        if (thing.position.dist(nukeCenter) < this.nukeR) {
+        if (thing.position.dist(nukeCenter) < this._nuke.r) {
           thing.kill();
         }
       }
+      this.clearNuke();
     }
-    this.readyNuke = false;
   }
 
   normalTick() {
@@ -152,10 +153,26 @@ class World extends CustomEventTarget {
       this.pausedTick();
   }
 
-  nuke(x, y, r) {
-    this.nukeX = x;
-    this.nukeY = y;
-    this.nukeR = r;
-    this.readyNuke = true;
+  setNukeLocation(x, y) {
+    this._nuke.x = x;
+    this._nuke.y = y;
+  }
+
+  setNukeRadius(r) {
+    this._nuke.r = r;
+  }
+
+  armNuke() {
+    this._nuke.armed = true;
+  }
+
+  clearNuke() {
+    this._nuke = {
+      x: null, y: null, r: -1, armed: false
+    };
+  }
+
+  get nukeRadius() {
+    return this._nuke.r;
   }
 }

@@ -34,42 +34,9 @@ let resetButton;
 let logEvents;
 let mostRecentEvent;
 let immortality = false; // if true, vehicles will not die
-
-
-function vehicleSpawnHandler(event) {
-  let vehicle = event.detail.object;
-
-  if (vehicle instanceof Vehicle) {
-    world.vehicles.push(vehicle);
-    vehicle.addEventListener('mutate', mutationHandler);
-    vehicle.addEventListener('reproduce', reproductionHandler);
-    vehicle.addEventListener('die', deadHandler);
-  }
-}
-
-function mutationHandler(event) {
-  mutatedGenes[event.detail.name] = (mutatedGenes[event.detail.name] || 0) + 1;
-}
-
-function reproductionHandler(event) {
-  numReproduced++;
-}
-
-function deadHandler(event) {
-  let vehicle = event.detail.self; // the vehicle that died
-
-  dead++;
-  let x = vehicle.position.x;
-  let y = vehicle.position.y;
-  for (let i = 0; i < 5; i++) {
-    world.createFood(x + random(-5, 5), y + random(-5, 5));
-  }
-
-  if (world.vehicles.length === 1) {
-    bestVehicle = vehicle;
-    saveBestVehicleButton.removeAttribute("disabled");
-  }
-}
+let nukeGrowing = false;
+let mouseDown = false;
+let nukeAug = 0;
 
 function setup() {
   createCanvas(windowWidth / 1.5, windowHeight / 1.5);
@@ -193,23 +160,43 @@ function setup() {
   loadOptimal2Button.mousePressed(loadOptimalNoCluster);
 }
 
-function loadOptimalCluster() {
-  fetch("./optimal-population-configurations/config-1-clusters.json").then(r => r.json()).then(json => {
-    loadConfigurationFromJSON(
-      json);
-  });
+function vehicleSpawnHandler(event) {
+  let vehicle = event.detail.object;
+
+  if (vehicle instanceof Vehicle) {
+    world.vehicles.push(vehicle);
+    vehicle.addEventListener('mutate', mutationHandler);
+    vehicle.addEventListener('reproduce', reproductionHandler);
+    vehicle.addEventListener('die', deadHandler);
+  }
 }
 
-function loadOptimalNoCluster() {
-  fetch("./optimal-population-configurations/config-2-less-clusters.json").then(r => r.json()).then(json => {
-    loadConfigurationFromJSON(
-      json);
-  });
+function mutationHandler(event) {
+  mutatedGenes[event.detail.name] = (mutatedGenes[event.detail.name] || 0) + 1;
+}
+
+function reproductionHandler(event) {
+  numReproduced++;
+}
+
+function deadHandler(event) {
+  let vehicle = event.detail.self; // the vehicle that died
+
+  dead++;
+  let x = vehicle.position.x;
+  let y = vehicle.position.y;
+  for (let i = 0; i < 5; i++) {
+    world.createFood(x + random(-5, 5), y + random(-5, 5));
+  }
+
+  if (world.vehicles.length === 1) {
+    bestVehicle = vehicle;
+    saveBestVehicleButton.removeAttribute("disabled");
+  }
 }
 
 let konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 let kCheck = [];
-let killMode = false;
 
 function keyPressed() {
   kCheck.push(keyCode);
@@ -227,37 +214,67 @@ function keyPressed() {
   else if (key === "r") {
     loop();
   }
-  console.log(killMode);
-  if (key == "m") {
-    killMode = true;
+  if (key == 's') {
+    nukeAug = -3;
+    nukeGrowing = true;
   }
-  console.log(killMode);
+  if (key == 'w') {
+    nukeAug = 3;
+    nukeGrowing = true;
+  }
+  if (key == 'q') {
+    nukeAug = 0;
+    nukeGrowing = false;
+    world.setNukeRadius(-1);
+  }
 
 }
 
 function keyReleased() {
-  if (key == 'm') {
-    killMode = false;
+  if (key == 's' || key == 'w') {
+    nukeAug = 0;
+    nukeGrowing = false;
   }
 }
 
-function saveConfiguration() {
-  saveFile([JSON.stringify({
-    foodSpawnChance: foodSpawnSlider.value(),
-    poisonSpawnChance: poisonSpawnSlider.value(),
-    reproduceChance: reproduceSlider.value(),
-    dnas: world.vehicles.map(v => v.dna)
-  }, function (key, value) {
-    if (key == '_parentTarget')
-      return undefined;
-    return value;
-  }, 2)], 'configuration.json');
-  // saveJSON({
-  //   foodSpawnChance: foodSpawnSlider.value(),
-  //   poisonSpawnChance: poisonSpawnSlider.value(),
-  //   reproduceChance: reproduceSlider.value(),
-  //   dnas: world.vehicles.map(i => i.dna)
-  // }, "configuration.json");
+
+function mousePressed() {
+  if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
+    return;
+  }
+
+  mouseDown = true;
+  nukeGrowing = true;
+  world.setNukeLocation(mouseX, mouseY);
+}
+
+function mouseDragged() {
+  if (world.nukeRadius > 0) {
+    world.setNukeLocation(mouseX, mouseY);
+  }
+}
+
+function mouseReleased() {
+  mouseDown = false;
+  nukeGrowing = false;
+  if (world.nukeRadius > 0) {
+    world.armNuke();
+  }
+}
+
+
+function loadOptimalCluster() {
+  fetch("./optimal-population-configurations/config-1-clusters.json").then(r => r.json()).then(json => {
+    loadConfigurationFromJSON(
+      json);
+  });
+}
+
+function loadOptimalNoCluster() {
+  fetch("./optimal-population-configurations/config-2-less-clusters.json").then(r => r.json()).then(json => {
+    loadConfigurationFromJSON(
+      json);
+  });
 }
 
 function loadConfigurationFromFile(file) {
@@ -333,19 +350,37 @@ function saveBestVehicle() {
   }, 2)], "best-vehicle.json");
 }
 
-function mousePressed() {
-  if (mouseX > width || mouseY > height || mouseX < 0 || mouseY < 0) {
-    return;
-  }
 
-  if (killMode) {
-    world.nuke(mouseX, mouseY, 100);
-  }
+function saveConfiguration() {
+  saveFile([JSON.stringify({
+    foodSpawnChance: foodSpawnSlider.value(),
+    poisonSpawnChance: poisonSpawnSlider.value(),
+    reproduceChance: reproduceSlider.value(),
+    dnas: world.vehicles.map(v => v.dna)
+  }, function (key, value) {
+    if (key == '_parentTarget')
+      return undefined;
+    return value;
+  }, 2)], 'configuration.json');
+  // saveJSON({
+  //   foodSpawnChance: foodSpawnSlider.value(),
+  //   poisonSpawnChance: poisonSpawnSlider.value(),
+  //   reproduceChance: reproduceSlider.value(),
+  //   dnas: world.vehicles.map(i => i.dna)
+  // }, "configuration.json");
 }
+
 
 function draw() {
   background(51);
 
+  if (nukeGrowing && mouseDown) {
+    let newR = world.nukeRadius + nukeAug;
+    if (newR >= 0)
+      world.setNukeRadius(world.nukeRadius + nukeAug);
+    else
+      world.setNukeRadius(-1);
+  }
 
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
@@ -357,6 +392,8 @@ function draw() {
   world.vehicles.forEach(v => v.immortal = immortality);
   world.tick();
 
+  noStroke();
+  fill(255);
   textAlign(CENTER, CENTER);
   textSize(18);
   fill(240);
@@ -382,4 +419,10 @@ function draw() {
   fill(240);
   text(`Frame: ${frameCount}`, 54, height - 20);
 
+  if (world.nukeRadius > 0) {
+    stroke(255, 0, 0);
+    strokeWeight(4);
+    fill(255, 0, 0, 50);
+    circle(world._nuke.x, world._nuke.y, world._nuke.r * 2);
+  }
 }
