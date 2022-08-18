@@ -185,10 +185,17 @@ function deadHandler(event) {
   dead++;
   let x = vehicle.position.x;
   let y = vehicle.position.y;
-  for (let i = 0; i < 5; i++) {
-    world.createFood(x + random(-5, 5), y + random(-5, 5));
+  console.log(event.detail.cause);
+  console.log(event.detail.cause == 'killed by supernatural forces');
+  if (event.detail.cause != 'killed by supernatural forces') {
+    for (let i = 0; i < random(1, 6); i++) {
+      world.createFood(x + random(-5, 5), y + random(-5, 5));
+    }
+  } else {
+    for (let i = 0; i < random(0, 3); i++) {
+      world.createPoison(x + random(-5, 5), y + random(-5, 5));
+    }
   }
-
   if (world.vehicles.length === 1) {
     bestVehicle = vehicle;
     saveBestVehicleButton.removeAttribute("disabled");

@@ -44,6 +44,7 @@ class Vehicle extends CustomEventTarget {
     this.livingFrames = 0;
     this.maxFrames = 14000; // max age is 14000 frames (233 seconds)
     this.lastReproduced = null;
+    this.killed = false; // used for 'supernatural' killing by the user using this.kill()
 
     if (dna === undefined) {
       this.dna = new DNA();
@@ -108,11 +109,16 @@ class Vehicle extends CustomEventTarget {
   }
 
   kill() {
-    this.health = -Infinity;
-    EventUtil.dispatchDie(this, 'killed by supernatural forces');
+    this.killed = true;
   }
 
   tick(world) {
+    // check if supernaturally killed first (Using the kill method)
+    if (this.killed) {
+      this.health = -Infinity;
+      EventUtil.dispatchDie(this, 'killed by supernatural forces');
+      return;
+    }
     // vehicles have genes that cause them to seek food, avoid poison, and seek other vehicles
     this.doMovementBehavior(world);
 
