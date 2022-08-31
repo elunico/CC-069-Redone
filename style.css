@@ -52,6 +52,25 @@ h4 {
 
 }
 
+#bucket-div {
+  display: grid;
+  grid-template-columns: max-content max-content;
+}
+
+.left-bucket {
+  grid-column: 1;
+  padding: 0 0.5em;
+}
+
+.right-bucket {
+  grid-column: 2;
+  font-family: Source Code Pro, Courier, monospace;
+  font-size: 0.85em;
+  font-weight: 500;
+  padding: 0 0.5em;
+  white-space: pre;
+}
+
 kbd {
   background-color: #eee;
   border-radius: 3px;
@@ -65,7 +84,7 @@ kbd {
   padding: 2px 4px;
   white-space: nowrap;
   font-family: "Monmaco", "Menlo", "DejaVu Sans Mono", monospace;
- }
+}
 
 #recent-container:hover {
   transform: translateX(0);

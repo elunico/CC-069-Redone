@@ -38,6 +38,15 @@ let nukeGrowing = false;
 let mouseDown = false;
 let nukeAug = 0;
 
+let buckets = [];
+let bucketsDiv;
+
+function increment(obj, key) {
+  let v = obj[key];
+  if (v) obj[key]++;
+  else obj[key] = 1;
+}
+
 function setup() {
   createCanvas(windowWidth / 1.5, windowHeight / 1.5);
   world = new World(width, height, 100, 10, population);
@@ -131,6 +140,13 @@ function setup() {
 
   createDiv("<h3>Reproduction &amp; Mutation events</h3>");
 
+  createDiv("<h4>Breakdown of Gene Values</h4>");
+
+  bucketsDiv = createDiv("");
+  bucketsDiv.attribute('id', 'bucket-div');
+
+
+
   eventsDiv = createDiv("");
 
   createP("");
@@ -185,8 +201,6 @@ function deadHandler(event) {
   dead++;
   let x = vehicle.position.x;
   let y = vehicle.position.y;
-  console.log(event.detail.cause);
-  console.log(event.detail.cause == 'killed by supernatural forces');
   if (event.detail.cause != 'killed by supernatural forces') {
     for (let i = 0; i < random(1, 6); i++) {
       world.createFood(x + random(-5, 5), y + random(-5, 5));
@@ -289,7 +303,6 @@ function loadConfigurationFromFile(file) {
 }
 
 function loadConfigurationFromJSON(json) {
-  console.log(json);
   foodSpawnSlider.value(json.foodSpawnChance);
   poisonSpawnSlider.value(json.poisonSpawnChance);
   reproduceSlider.value(json.reproduceChance);
@@ -308,7 +321,6 @@ function loadConfigurationFromJSON(json) {
           dnas[i].genes[keys[j]].mutationRate || 0.05
         );
         dna.addGene(gene);
-        console.log(gene);
       }
       world.createVehicle(random(width), random(height), dna);
     }
@@ -318,7 +330,6 @@ function loadConfigurationFromJSON(json) {
       for (let j = 0; j < dnas[i].length; j++) {
         let gene = new Gene(nameForGene(j), dnas[i][j], minForGene(j), maxForGene(j), 0.05);
         dna.addGene(gene);
-        console.log(gene);
       }
       world.createVehicle(random(width), random(height), dna);
     }
@@ -380,6 +391,44 @@ function saveConfiguration() {
 
 function draw() {
   background(51);
+
+  if (frameCount % 90 == 0) {
+    let intermediateDiv = createDiv('');
+    intermediateDiv.attribute('hidden', true);
+    intermediateDiv.attribute('id', 'hidden-bucket-div');
+    console.log("Updating buckets");
+    for (let vehicle of world.vehicles) {
+      for (let i = 0; i < Object.values(vehicle.dna.genes).length; i++) {
+        let gene = Object.values(vehicle.dna.genes)[i];
+        let value = buckets[i];
+        if (value) {
+          buckets[i].value += gene.probability;
+        } else {
+          buckets[i] = { name: gene.name, value: gene.probability };
+        }
+
+      }
+    }
+
+    // console.log(buckets);
+
+    for (let obj of buckets) {
+      let avg = obj.value / world.vehicles.length;
+      let sgn = avg < 0 ? '-' : '&nbsp';
+      let leftSide = createDiv(`Average value of ${obj.name}`);
+      leftSide.elt.classList.add('left-bucket');
+      let rightSide = createDiv(`${sgn}${nf(abs(avg), 4, 11)}`);
+      rightSide.elt.classList.add('right-bucket');
+      intermediateDiv.child(leftSide);
+      intermediateDiv.child(rightSide);
+      // intermediateDiv.html(bucketsDiv.html() + `<div style='padding: 0 1em'>Average value of ${obj.name} </div><div> ${sgn}${abs(avg)}</div>`);
+    }
+
+    bucketsDiv.html(`<br>${intermediateDiv.html()}<br>`);
+    intermediateDiv.remove();
+
+
+  }
 
   if (nukeGrowing && mouseDown) {
     let newR = world.nukeRadius + nukeAug;
