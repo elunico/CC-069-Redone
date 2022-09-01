@@ -23,6 +23,7 @@ let eventsDiv;
 let foodSpawnSlider;
 let poisonSpawnSlider;
 let reproduceSlider;
+let showGeneAveragesButton;
 let saveBestVehicleButton;
 let saveConfigurationButton;
 let eventFilter;
@@ -39,7 +40,6 @@ let mouseDown = false;
 let nukeAug = 0;
 
 let buckets = [];
-let bucketsDiv;
 
 function increment(obj, key) {
   let v = obj[key];
@@ -88,6 +88,7 @@ function setup() {
   });
 
   debug = createCheckbox("Debug Visualization");
+  showGeneAveragesButton = createCheckbox("Show Average Gene Values");
 
   pauseButton = createButton("Pause");
   pauseButton.mousePressed(() => {
@@ -139,13 +140,6 @@ function setup() {
   reproduceSlider.style("width", "50%");
 
   createDiv("<h3>Reproduction &amp; Mutation events</h3>");
-
-  createDiv("<h4>Breakdown of Gene Values</h4>");
-
-  bucketsDiv = createDiv("");
-  bucketsDiv.attribute('id', 'bucket-div');
-
-
 
   eventsDiv = createDiv("");
 
@@ -389,14 +383,12 @@ function saveConfiguration() {
 }
 
 
+let canvasString = [];
 function draw() {
   background(51);
 
   if (frameCount % 90 == 0) {
-    let intermediateDiv = createDiv('');
-    intermediateDiv.attribute('hidden', true);
-    intermediateDiv.attribute('id', 'hidden-bucket-div');
-    console.log("Updating buckets");
+    canvasString = [];
     for (let vehicle of world.vehicles) {
       for (let i = 0; i < Object.values(vehicle.dna.genes).length; i++) {
         let gene = Object.values(vehicle.dna.genes)[i];
@@ -410,25 +402,15 @@ function draw() {
       }
     }
 
-    // console.log(buckets);
-
-    for (let obj of buckets) {
+    for (let i = 0; i < buckets.length; i++) {
+      let obj = buckets[i];
       let avg = obj.value / world.vehicles.length;
-      let sgn = avg < 0 ? '-' : '&nbsp';
-      let leftSide = createDiv(`Average value of ${obj.name}`);
-      leftSide.elt.classList.add('left-bucket');
-      let rightSide = createDiv(`${sgn}${nf(abs(avg), 4, 11)}`);
-      rightSide.elt.classList.add('right-bucket');
-      intermediateDiv.child(leftSide);
-      intermediateDiv.child(rightSide);
-      // intermediateDiv.html(bucketsDiv.html() + `<div style='padding: 0 1em'>Average value of ${obj.name} </div><div> ${sgn}${abs(avg)}</div>`);
+      let sgn = avg < 0 ? '-' : ' ';
+      canvasString.push({ name: obj.name, average: avg, sign: sgn });
     }
-
-    bucketsDiv.html(`<br>${intermediateDiv.html()}<br>`);
-    intermediateDiv.remove();
-
-
   }
+
+
 
   if (nukeGrowing && mouseDown) {
     let newR = world.nukeRadius + nukeAug;
@@ -438,18 +420,20 @@ function draw() {
       world.setNukeRadius(-1);
   }
 
+  let mostMutatedGene = Object.keys(mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "");
+
   foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
   poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
   reproduceDiv.html(`If conditions are optimal 2 vehicles have a  (${100 * reproduceSlider.value()}% chance of reproducing)`);
   eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced.<p> There have been ${Object.values(mutatedGenes)
-    .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${Object.keys(
-      mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "")}</code></p>`);
+    .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${mostMutatedGene}</code></p>`);
 
   world.vehicles.forEach(v => v.immortal = immortality);
   world.tick();
 
   noStroke();
   fill(255);
+  textFont('sans-serif');
   textAlign(CENTER, CENTER);
   textSize(18);
   fill(240);
@@ -480,5 +464,22 @@ function draw() {
     strokeWeight(4);
     fill(255, 0, 0, 50);
     circle(world._nuke.x, world._nuke.y, world._nuke.r * 2);
+  }
+
+  if (showGeneAveragesButton.checked()) {
+    textFont('Courier');
+    textAlign(RIGHT);
+    textSize(15);
+    stroke(0);
+    strokeWeight(3);
+    for (let i = 0; i < canvasString.length; i++) {
+      let obj = canvasString[i];
+      if (obj.name == mostMutatedGene) {
+        fill(255, 255, 0);
+      } else {
+        fill(255);
+      }
+      text(`avg ${obj.name} = ${obj.sign}${nf(abs(obj.average), 4, 11)}`, width - 20, (height - 15) - i * 17);
+    }
   }
 }
