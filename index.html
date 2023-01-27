@@ -31,29 +31,52 @@
     For a list of things that I changed, see the changes.txt file on the side.
     You can find this file on the <a href="https://github.com/elunico/CC-069-Redone">Github Repo</a> for this project.
   </p>
-  <h4>Color Key for Simulation</h4>
+  <br>
+  <h4>Explanation of Interaction</h4>
   <p class="description">
-    <span style="color: magenta">magenta vehicles</span> are healthy and become <span
-      style="color: darkcyan">cyan</span>
-    as
-    they are declining in health. A health of 0 causes the vehicle to
-    die and be removed
-    <br>
-    Vehicles have a maximum lifespan of 14000 frames and <span style="background-color: lightgray;">slowly darken</span>
-    until they get to their 14000th frame when they
-    die an are removed
-    <br>
-    Vehicles are outlined in <span style="color: white; background-color: rgb(51, 51, 51);">white</span> when they are
-    mature enough to reproduce and are half sized when they are younger than 2 seconds old.
-    <br>
-    <b>Clicking the mouse lets you launch a nuke.</b> Hold the <kbd>w</kbd> key to <i>grow the nuke radius</i>. hold
-    the
-    <kbd>s</kbd> key to <i>shrink the nuke radius</i>.
-    <br>Release the mouse to detonate or press <kbd>q</kbd> to cancel
-
-    <br>
-    This sketch is largely event driven. <a href="./events.html">See here for a full description of the events used</a>
-
+  <ul style="line-height: 1.35">
+    <li>
+      <span style="background-color: yellow">Yellow vehicles</span> are healthy and become <span
+        style="background-color: orange">orange</span>
+      as
+      they are declining in health. A health of 0 causes the vehicle to
+      die and be removed
+    </li>
+    <li>
+      Vehicles have a maximum lifespan of 14000 frames and <span style="background-color: lightgray;">slowly
+        darken</span>
+      until they get to their 14000th frame when they
+      die an are removed
+    </li>
+    <li>
+      Vehicles are outlined in <span style="color: white; background-color: rgb(51, 51, 51);">white</span> when they are
+      mature enough to reproduce and are half sized when they are younger than 2 seconds old.
+    </li>
+    <li>
+      Food is <span style="background-color: cyan">cyan</span>, Poison is <span
+        style="background-color: #ff4444">red</span>, Radioactivity is <span
+        style="background-color: limegreen">green</span>
+    </li>
+    <li>
+      <b>Clicking the mouse lets you launch a nuke.</b> Click the canvas and hold the <kbd>w</kbd> key to <i>grow the
+        nuke radius</i>. hold
+      the
+      <kbd>s</kbd> key to <i>shrink the nuke radius</i>.
+    </li>
+    <!-- <li> -->
+    <ul>
+      <li>
+        Release the mouse to detonate or press <kbd>q</kbd> to cancel
+      </li>
+    </ul>
+    <!-- </li> -->
+    <li>You can see statistics and adjust various settings below.</li>
+    <li>
+      This sketch is largely event driven. Hover the mouse in the upper left to see all events in real time. <a
+        href="./events.html">See here for a full description of the events
+        used</a>
+    </li>
+  </ul>
   </p>
 </body>
 

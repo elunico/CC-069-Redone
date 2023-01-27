@@ -59,7 +59,7 @@ class Environmental extends CustomEventTarget {
 
 class Food extends Environmental {
   constructor(x, y) {
-    super(x, y, color(0, 255, 0), 5);
+    super(x, y, color(0, 200, 255), 5);
     this.living_frames = 0;
     this.max_frames = 2000;
     this.nutrition = 0.2;
@@ -123,7 +123,7 @@ class PassiveEnvironmental extends Environmental {
 
 class RadiationSource extends PassiveEnvironmental {
   constructor(x, y) {
-    super(x, y, color(255, 255, 0), 5);
+    super(x, y, color(0, 255, 0), 5);
     this.living_frames = 0;
     this.max_frames = 10000;
     this.original_size = 5;

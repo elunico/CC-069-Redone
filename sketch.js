@@ -128,15 +128,15 @@ function setup() {
   createDiv("<h3>Controlling the Environment</h3>");
 
   foodDiv = createDiv("");
-  foodSpawnSlider = createSlider(0, 1, 0.75, 0.005);
+  foodSpawnSlider = createSlider(0, 1, 0.6, 0.005);
   foodSpawnSlider.style("width", "50%");
 
   poisonDiv = createDiv("");
-  poisonSpawnSlider = createSlider(0, 1, 0.055, 0.005);
+  poisonSpawnSlider = createSlider(0, 1, 0.155, 0.005);
   poisonSpawnSlider.style("width", "50%");
 
   reproduceDiv = createDiv("");
-  reproduceSlider = createSlider(0, 1, 0.85, 0.0025);
+  reproduceSlider = createSlider(0, 1, 55 / 100, 0.0025);
   reproduceSlider.style("width", "50%");
 
   createDiv("<h3>Reproduction &amp; Mutation events</h3>");
@@ -422,9 +422,9 @@ function draw() {
 
   let mostMutatedGene = Object.keys(mutatedGenes).reduce((a, b) => mutatedGenes[a] > mutatedGenes[b] ? a : b, "");
 
-  foodDiv.html(`Chance of food spawn: ${foodSpawnSlider.value()}`);
-  poisonDiv.html(`Chance of poison spawn: ${poisonSpawnSlider.value()}`);
-  reproduceDiv.html(`If conditions are optimal 2 vehicles have a  (${100 * reproduceSlider.value()}% chance of reproducing)`);
+  foodDiv.html(`Each frame there is a ${nf(foodSpawnSlider.value() * 100, 1, 2)}% chance to spawn a piece of food`);
+  poisonDiv.html(`Each frame there is a ${nf(poisonSpawnSlider.value() * 100, 1, 2)}% chance to spawn a piece of poison`);
+  reproduceDiv.html(`If conditions are optimal, 2 vehicles have a ${nf(100 * reproduceSlider.value(), 1, 2)}% chance of reproducing`);
   eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced.<p> There have been ${Object.values(mutatedGenes)
     .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${mostMutatedGene}</code></p>`);
 

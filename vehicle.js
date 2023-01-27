@@ -396,9 +396,9 @@ class Vehicle extends CustomEventTarget {
     translate(this.position.x, this.position.y);
     rotate(angle);
 
-    let cyan = color(0, 255, 255);
-    let magenta = color(255, 0, 255);
-    let col = lerpColor(cyan, magenta, this.health);
+    let orange = color(255, 50, 0);
+    let yellow = color(255, 255, 0);
+    let col = lerpColor(orange, yellow, this.health);
     let black = color(0, 0, 0);
     col = lerpColor(col, black, (this.livingFrames) / 14000);
 
