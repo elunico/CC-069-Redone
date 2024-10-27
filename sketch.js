@@ -31,6 +31,9 @@ let loadButton;
 let pauseButton;
 let addNewButton;
 let resetButton;
+let poisonKeepDiv;
+let cleanPoisonButton;
+let poisonKeepSlider;
 
 let logEvents;
 let mostRecentEvent;
@@ -124,6 +127,14 @@ function setup() {
       world.createFood(random(width), random(height));
     }
   });
+
+  cleanPoisonButton = createButton('Clean up excess poison')
+  poisonKeepDiv = createDiv('')
+  poisonKeepSlider = createSlider(0, 1.0, 0.33, 0.01);
+
+  cleanPoisonButton.mousePressed(() => {
+    world.cullPoison(poisonKeepSlider.value())
+  })
 
   createDiv("<h3>Controlling the Environment</h3>");
 
@@ -427,6 +438,7 @@ function draw() {
   reproduceDiv.html(`If conditions are optimal, 2 vehicles have a ${nf(100 * reproduceSlider.value(), 1, 2)}% chance of reproducing`);
   eventsDiv.html(`${numReproduced} pairs of vehicles have reproduced.<p> There have been ${Object.values(mutatedGenes)
     .reduce((a, b) => a + b, 0)} mutations<br>The most mutated gene is <code>${mostMutatedGene}</code></p>`);
+  poisonKeepDiv.html(`Percent of existing poison particles to <b>keep</b>: ${nf(poisonKeepSlider.value() * 100, 1, 0)}%`)
 
   world.vehicles.forEach(v => v.immortal = immortality);
   world.tick();

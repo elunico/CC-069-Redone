@@ -20,6 +20,10 @@ class World extends CustomEventTarget {
     };
   }
 
+  cullPoison(keepPercent) {
+    this.poison = this.poison.filter(x => Math.random() <= keepPercent);
+  }
+
   populate() {
     for (let i = 0; i < this.food_count; i++) {
       this.createFood();
